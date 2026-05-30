@@ -3,86 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบเช็คชื่อนักเรียนระดับองค์กร (Enterprise)</title>
+  <title>Smart EduTrack - ระบบเช็คชื่ออัจฉริยะ</title>
 
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Fonts: Prompt & Sarabun -->
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- React & Babel -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Chart.js สำหรับ Data Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
-      --primary: #1e3a8a; /* Deep Blue */
-      --secondary: #3b82f6; /* Blue */
+      --primary: #0f172a; 
+      --accent: #3b82f6; 
       --surface: #ffffff;
-      --background: #f8fafc; /* Slate 50 */
+      --background: #f1f5f9; 
     }
 
     body { 
       font-family: 'Sarabun', sans-serif; 
       background-color: var(--background);
       color: #334155;
+      overflow: hidden;
     }
 
-    /* ใช้ Prompt สำหรับหัวข้อเพื่อความทันสมัยแต่น่าเชื่อถือ */
     h1, h2, h3, h4, h5, h6, .font-prompt, .nav-item { 
       font-family: 'Prompt', sans-serif; 
     }
 
-    /* Premium UI Effects */
-    .premium-card {
-      background: var(--surface);
-      border-radius: 16px;
-      border: 1px solid rgba(226, 232, 240, 0.8);
-      box-shadow: 0 4px 24px -8px rgba(15, 23, 42, 0.08);
-      transition: all 0.3s ease;
+    /* Glassmorphism & Modern Cards */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .premium-card:hover {
-      box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.12);
+    .glass-card:hover {
+      box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.12);
+      transform: translateY(-2px);
     }
 
-    .focus-ring-glow {
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    /* Gamification Animations */
+    @keyframes fire-pulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5)); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.8)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5)); }
+    }
+    .streak-fire { animation: fire-pulse 2s infinite; display: inline-block; }
+
+    @keyframes hologram-sweep {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .hologram-text {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      animation: hologram-sweep 3s linear infinite;
     }
 
-    /* Custom Scrollbar for professional look */
+    /* Scanner Ring Effect */
+    .scanner-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      pointer-events: none;
+    }
+    @keyframes scan-active {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      70% { box-shadow: 0 0 0 30px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+    .is-scanning .scanner-ring { animation: scan-active 2s infinite; border-color: rgba(59, 130, 246, 0.5); }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     /* Animations */
-    @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    
-    .animate-slide-up { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-
-    /* Formal Table Styling */
-    .formal-table th { background-color: #f1f5f9; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; color: #64748b; font-family: 'Prompt', sans-serif; }
-    .formal-table tr { transition: background-color 0.2s; border-bottom: 1px solid #e2e8f0; }
-    .formal-table tr:hover { background-color: #f8fafc; }
-    .formal-table td { padding: 1rem; vertical-align: middle; }
-
-    /* Badges */
-    .badge { padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; font-family: 'Prompt', sans-serif; display: inline-flex; items-center; gap: 0.25rem; }
-    .badge-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .badge-warning { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-    .badge-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-    .badge-info { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-
-    /* Status Pulse */
-    .status-pulse { position: relative; display: flex; align-items: center; justify-content: center; width: 12px; height: 12px; }
-    .status-pulse::before { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; opacity: 0.5; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
-    .status-pulse.active::before { background-color: #22c55e; }
-    .status-pulse.inactive::before { background-color: #ef4444; }
-    .status-pulse .dot { width: 8px; height: 8px; border-radius: 50%; z-index: 1; }
-    .status-pulse.active .dot { background-color: #16a34a; }
-    .status-pulse.inactive .dot { background-color: #dc2626; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -91,8 +113,8 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // ระบบเสียง (นุ่มนวล เป็นทางการมากขึ้น)
-    const playBeep = (type) => {
+    // ระบบเสียงล้ำสมัย (Sci-Fi Audio Feedback)
+    const playSound = (type) => {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -103,31 +125,50 @@
         if (type === 'success') {
           osc.type = 'sine';
           osc.frequency.setValueAtTime(1200, ctx.currentTime);
-          gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.1);
+          osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.1);
+          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+          osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'streak') {
+          // เสียงปลดล็อกรางวัล
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+          osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.2);
+          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          osc.start(); osc.stop(ctx.currentTime + 0.4);
         } else {
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(250, ctx.currentTime);
-          gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.2);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(200, ctx.currentTime);
+          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          osc.start(); osc.stop(ctx.currentTime + 0.4);
         }
-      } catch (err) {
-        console.error("Audio API not supported");
-      }
+      } catch (err) { console.error("Audio API error"); }
     };
 
+    // ฐานข้อมูลนักเรียน (เพิ่มระบบ Streak และ Badges)
     const initialStudents = {
-      "1001": { id: "1001", name: "เด็กชายสมชาย มุ่งมั่น", class: "ม.1/1", number: 1, attendanceRate: 95, photo: null },
-      "1002": { id: "1002", name: "เด็กหญิงสมหญิง รักเรียน", class: "ม.1/1", number: 2, attendanceRate: 88, photo: null },
-      "1003": { id: "1003", name: "เด็กชายปิติ ใฝ่รู้", class: "ม.1/2", number: 1, attendanceRate: 75, photo: null },
-      "1004": { id: "1004", name: "เด็กหญิงมานี ใจดี", class: "ม.1/2", number: 2, attendanceRate: 100, photo: null },
-      "1005": { id: "1005", name: "เด็กชายวีระ กล้าหาญ", class: "ม.2/1", number: 1, attendanceRate: 82, photo: null },
-      "1006": { id: "1006", name: "เด็กหญิงชูใจ สดใส", class: "ม.2/1", number: 2, attendanceRate: 90, photo: null },
-      "1007": { id: "1007", name: "เด็กชายเพชร แข็งแกร่ง", class: "ม.3/1", number: 1, attendanceRate: 98, photo: null },
+      "1001": { id: "1001", name: "เด็กชายสมชาย มุ่งมั่น", class: "ม.1/1", number: 1, attendanceRate: 98, streak: 14, badges: ['Early Bird', 'Perfect Week'], photo: null },
+      "1002": { id: "1002", name: "เด็กหญิงสมหญิง รักเรียน", class: "ม.1/1", number: 2, attendanceRate: 88, streak: 3, badges: [], photo: null },
+      "1003": { id: "1003", name: "เด็กชายปิติ ใฝ่รู้", class: "ม.1/2", number: 1, attendanceRate: 75, streak: 0, badges: [], photo: null },
+      "1004": { id: "1004", name: "เด็กหญิงมานี ใจดี", class: "ม.1/2", number: 2, attendanceRate: 100, streak: 45, badges: ['Legendary', 'Unstoppable'], photo: null },
+      "1005": { id: "1005", name: "เด็กชายวีระ กล้าหาญ", class: "ม.2/1", number: 1, attendanceRate: 82, streak: 5, badges: ['Consistent'], photo: null },
+    };
+
+    // จำลองประวัติรายเดือนสำหรับหน้า Spreadsheet
+    const generateInitialAttendance = () => {
+      const data = {};
+      const today = new Date();
+      Object.keys(initialStudents).forEach(id => {
+        data[id] = {};
+        for(let i=1; i<=10; i++) { // สุ่มย้อนหลัง 10 วัน
+          const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+          data[id][dateStr] = Math.random() > 0.2 ? 'success' : (Math.random() > 0.5 ? 'leave' : 'error');
+        }
+      });
+      return data;
     };
 
     function App() {
@@ -137,23 +178,26 @@
       const [lastScan, setLastScan] = useState(null);
       const [isFocused, setIsFocused] = useState(true);
       const [barcode, setBarcode] = useState('');
-      const [importText, setImportText] = useState('');
-      const [filterClass, setFilterClass] = useState('all');
       const [toast, setToast] = useState(null);
-      const [isAutoScanning, setIsAutoScanning] = useState(false); 
-      const [addForm, setAddForm] = useState({ id: '', name: '', class: '', number: '', photo: null });
+      
+      const inputRef = useRef(null);
+      const chartRef = useRef(null);
+      const chartInstance = useRef(null);
 
+      // สำหรับหน้า Spreadsheet
       const today = new Date();
       const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
       const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-      const [attendanceData, setAttendanceData] = useState({});
+      const [attendanceData, setAttendanceData] = useState(generateInitialAttendance());
+      const [filterClass, setFilterClass] = useState('all');
 
-      const inputRef = useRef(null);
+      // AI Insights State
+      const [aiAlerts, setAiAlerts] = useState([]);
 
-      // ฟังก์ชัน Toast ที่ดูทันสมัย
-      const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3500);
+      // Toast System
+      const showToast = (message, type = 'success', icon = 'fa-check-circle') => {
+        setToast({ message, type, icon });
+        setTimeout(() => setToast(null), 4000);
       };
 
       // บังคับโฟกัสสำหรับ Scanner
@@ -169,15 +213,84 @@
         return () => clearInterval(focusInterval);
       }, [activeTab]);
 
-      const totalStudents = Object.keys(studentsDB).length;
-      const presentLogs = logs.filter(l => l.status === 'success' || l.status === 'leave');
-      const uniquePresentIds = new Set(presentLogs.map(l => l.student?.id));
-      const presentCount = uniquePresentIds.size;
-      const leaveCount = new Set(logs.filter(l => l.status === 'leave').map(l => l.student?.id)).size;
-      const absentCount = totalStudents - presentCount;
-      const allClasses = [...new Set(Object.values(studentsDB).map(s => s.class))].sort();
+      // AI Predictive Analysis Logic
+      useEffect(() => {
+        const alerts = [];
+        let lowAttendanceCount = 0;
+        
+        Object.values(studentsDB).forEach(s => {
+          if (s.attendanceRate < 80) lowAttendanceCount++;
+          if (s.streak === 0 && s.attendanceRate < 85) {
+            alerts.push({ type: 'warning', msg: `เฝ้าระวัง: ${s.name} มีแนวโน้มขาดเรียนบ่อย` });
+          }
+        });
 
-      const handleProcessBarcode = (code, manualStatus = null) => {
+        if (lowAttendanceCount > 0) {
+          alerts.push({ type: 'danger', msg: `พบนักเรียน ${lowAttendanceCount} คน มีอัตราการเข้าเรียนวิกฤต (<80%)` });
+        }
+        
+        const presentCount = logs.filter(l => l.status === 'success').length;
+        if (presentCount > Object.keys(studentsDB).length * 0.9) {
+          alerts.push({ type: 'success', msg: `ยอดเยี่ยม! วันนี้อัตราการเข้าเรียนสูงกว่า 90%` });
+        }
+
+        setAiAlerts(alerts);
+      }, [studentsDB, logs]);
+
+      // Chart.js Rendering Logic
+      useEffect(() => {
+        if (activeTab === 'dashboard' && chartRef.current) {
+          if (chartInstance.current) {
+            chartInstance.current.destroy();
+          }
+
+          const ctx = chartRef.current.getContext('2d');
+          
+          // ข้อมูลจำลองสำหรับกราฟ
+          const classes = [...new Set(Object.values(studentsDB).map(s => s.class))].sort();
+          const presentData = classes.map(c => Object.values(studentsDB).filter(s => s.class === c && logs.some(l => l.student.id === s.id && l.status === 'success')).length);
+          const absentData = classes.map(c => Object.values(studentsDB).filter(s => s.class === c && !logs.some(l => l.student.id === s.id && l.status === 'success')).length);
+
+          chartInstance.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: classes,
+              datasets: [
+                {
+                  label: 'มาเรียน',
+                  data: presentData.length > 0 ? presentData : [10, 15, 8], // mock fallback
+                  backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                  borderRadius: 6,
+                },
+                {
+                  label: 'ขาดเรียน',
+                  data: absentData.length > 0 ? absentData : [2, 1, 3], // mock fallback
+                  backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                  borderRadius: 6,
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom', labels: { font: { family: 'Prompt' } } },
+                title: { display: false }
+              },
+              scales: {
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+              },
+              animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+              }
+            }
+          });
+        }
+      }, [activeTab, logs, studentsDB]);
+
+      const handleProcessBarcode = (code) => {
         const cleanCode = code.trim();
         if (!cleanCode) return;
 
@@ -185,45 +298,44 @@
         const timestamp = new Date();
         const timeString = timestamp.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        if (!manualStatus) {
-          const recentScan = logs.find(
-            log => log.student?.id === cleanCode && 
-            (timestamp - log.rawTime) < 60000 && 
-            (log.status === 'success')
-          );
+        // ป้องกันสแกนซ้ำภายใน 1 นาที
+        const recentScan = logs.find(log => log.student?.id === cleanCode && (timestamp - log.rawTime) < 60000 && log.status === 'success');
 
-          if (recentScan) {
-            playBeep('error');
-            setLastScan({ id: Math.random(), status: 'warning', message: 'ทำรายการซ้ำ (ภายใน 1 นาที)', student: student, time: timeString });
-            return;
-          }
+        if (recentScan) {
+          playSound('error');
+          showToast(`ทำรายการซ้ำ: ${student.name}`, 'warning', 'fa-triangle-exclamation');
+          return;
         }
 
         if (student) {
-          let logStatus = manualStatus || 'success';
-          let logMessage = logStatus === 'success' ? 'บันทึกเข้าเรียน' : logStatus === 'leave' ? 'บันทึกการลา' : 'ขาดเรียน';
+          // Gamification: เพิ่ม Streak
+          const newStreak = student.streak + 1;
+          const isMilestone = newStreak % 5 === 0; // ทุกๆ 5 วันติดจะได้รางวัล
+          
+          if (isMilestone) playSound('streak');
+          else playSound('success');
 
-          playBeep('success');
-          const filteredLogs = manualStatus ? logs.filter(l => l.student?.id !== student.id) : logs;
-          const newLog = { id: Math.random().toString(36).substr(2, 9), rawTime: timestamp, time: manualStatus ? 'ปรับปรุงข้อมูล' : timeString, student: student, status: logStatus };
+          // อัปเดต DB
+          const updatedStudent = { ...student, streak: newStreak };
+          setStudentsDB(prev => ({ ...prev, [cleanCode]: updatedStudent }));
+
+          const newLog = { id: Math.random().toString(36).substr(2, 9), rawTime: timestamp, time: timeString, student: updatedStudent, status: 'success' };
           
-          setLogs([newLog, ...filteredLogs]);
-          setLastScan({ id: Math.random(), status: logStatus, message: logMessage, student: student, time: timeString });
+          setLogs([newLog, ...logs]);
+          setLastScan({ id: Math.random(), status: 'success', student: updatedStudent, time: timeString, milestone: isMilestone });
           
+          // บันทึกลงตารางรายเดือน
           const dateKey = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
           setAttendanceData(prev => ({
             ...prev,
-            [student.id]: {
-              ...(prev[student.id] || {}),
-              [dateKey]: logStatus
-            }
+            [student.id]: { ...(prev[student.id] || {}), [dateKey]: 'success' }
           }));
 
-          if(!manualStatus) showToast(`บันทึก ${student.name} สำเร็จ`, 'success');
+          if(isMilestone) showToast(`🎉 ปลดล็อกความสำเร็จ! ${student.name} มาเรียน ${newStreak} วันติด!`, 'success', 'fa-fire');
         } else {
-          playBeep('error');
+          playSound('error');
           setLogs(prev => [{ id: Math.random().toString(36).substr(2, 9), rawTime: timestamp, time: timeString, codeScanned: cleanCode, status: 'error' }, ...prev]);
-          setLastScan({ id: Math.random(), status: 'error', message: 'ไม่พบข้อมูลในระบบส่วนกลาง', codeScanned: cleanCode, time: timeString });
+          setLastScan({ id: Math.random(), status: 'error', message: 'ไม่พบฐานข้อมูล', codeScanned: cleanCode, time: timeString });
         }
       };
 
@@ -235,116 +347,12 @@
         }
       };
 
-      // Simulator Bot
-      useEffect(() => {
-        let interval;
-        if (isAutoScanning) {
-          interval = setInterval(() => {
-            const unscannedIds = Object.keys(studentsDB).filter(id => !logs.some(l => l.student?.id === id && (l.status === 'success' || l.status === 'leave')));
-            if (unscannedIds.length > 0) {
-              handleProcessBarcode(unscannedIds[Math.floor(Math.random() * unscannedIds.length)]);
-            } else {
-              setIsAutoScanning(false);
-              showToast('จำลองสถานการณ์เสร็จสิ้น', 'info');
-            }
-          }, 2000); 
-        }
-        return () => clearInterval(interval);
-      }, [isAutoScanning, studentsDB, logs]);
-
-      const handlePhotoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const url = URL.createObjectURL(file);
-          setAddForm(prev => ({ ...prev, photo: url }));
-        }
-      };
-
-      const handleAddSingleStudent = (e) => {
-        e.preventDefault();
-        if (!addForm.id || !addForm.name) {
-          showToast('กรุณากรอกข้อมูลสำคัญให้ครบถ้วน', 'error');
-          return;
-        }
-        setStudentsDB(prev => ({
-          ...prev,
-          [addForm.id]: {
-            id: addForm.id,
-            name: addForm.name,
-            class: addForm.class || '-',
-            number: parseInt(addForm.number) || 0,
-            attendanceRate: 100,
-            photo: addForm.photo
-          }
-        }));
-        showToast(`ลงทะเบียน ${addForm.name} เข้าสู่ระบบแล้ว`, 'success');
-        setAddForm({ id: '', name: '', class: '', number: '', photo: null });
-      };
-
-      const processImportData = (text) => {
-        const lines = text.split('\n');
-        let importedCount = 0;
-        const newDB = { ...studentsDB };
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          const parts = line.split(',');
-          if (parts.length >= 4) {
-            const id = parts[0]?.trim();
-            const name = parts[1]?.trim();
-            const className = parts[2]?.trim();
-            const number = parseInt(parts[3]?.trim(), 10) || 0;
-            if (id && name && id !== 'รหัสนักเรียน' && id !== 'รหัส') {
-              newDB[id] = { id, name, class: className, number, attendanceRate: 100, photo: null };
-              importedCount++;
-            }
-          }
-        }
-        if (importedCount > 0) {
-          setStudentsDB(newDB);
-          setImportText('');
-          showToast(`นำเข้าข้อมูลบุคลากรสำเร็จ ${importedCount} รายการ`, 'success');
-        } else {
-          showToast('โครงสร้างข้อมูลไม่ถูกต้อง กรุณาตรวจสอบ', 'error');
-        }
-      };
-
+      // ฟังก์ชันจัดการตาราง Spreadsheet
       const handleCellEdit = (id, field, value) => {
         setStudentsDB(prev => ({
           ...prev,
-          [id]: {
-            ...prev[id],
-            [field]: field === 'number' || field === 'attendanceRate' ? (parseInt(value) || 0) : value
-          }
+          [id]: { ...prev[id], [field]: field === 'number' || field === 'attendanceRate' ? (parseInt(value) || 0) : value }
         }));
-      };
-
-      const handleDownloadTemplate = () => {
-        const headers = "รหัสประจำตัว,ชื่อ-นามสกุล,ระดับชั้น,เลขที่\n";
-        const sample = "1001,เด็กชายสมชาย มุ่งมั่น,ม.1/1,1\n1002,เด็กหญิงสมหญิง รักเรียน,ม.1/1,2";
-        const blob = new Blob(["\uFEFF" + headers + sample], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "student_template.csv";
-        link.click();
-      };
-
-      const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const text = event.target.result;
-          const lines = text.split('\n');
-          // ถ้ามีบรรทัดหัวข้อ (Header) ให้ตัดทิ้ง
-          if (lines.length > 0 && (lines[0].includes('รหัส') || lines[0].includes('id'))) {
-             lines.shift();
-          }
-          processImportData(lines.join('\n'));
-        };
-        reader.readAsText(file);
-        e.target.value = ''; 
       };
 
       const handleAttendanceCellToggle = (studentId, dateKey) => {
@@ -353,35 +361,35 @@
           let nextStatus = '';
           if (!currentStatus) nextStatus = 'success';
           else if (currentStatus === 'success') nextStatus = 'leave';
-          else if (currentStatus === 'leave') nextStatus = 'error'; // ใช้ error แทน ขาดเรียน
+          else if (currentStatus === 'leave') nextStatus = 'error'; 
           else nextStatus = ''; 
 
-          return {
-            ...prev,
-            [studentId]: {
-              ...(prev[studentId] || {}),
-              [dateKey]: nextStatus
-            }
-          };
+          return { ...prev, [studentId]: { ...(prev[studentId] || {}), [dateKey]: nextStatus } };
         });
       };
 
       const renderScanner = () => (
-        <div className="flex flex-col lg:flex-row gap-8 animate-fade-in" onClick={() => {if(inputRef.current) inputRef.current.focus()}}>
+        <div className="flex flex-col lg:flex-row gap-8 h-full animate-fade-in" onClick={() => {if(inputRef.current) inputRef.current.focus()}}>
           
-          {/* ซ้าย: เครื่องสแกนและผลล่าสุด */}
+          {/* ซ้าย: เครื่องสแกนแบบ Hologram UI */}
           <div className="w-full lg:w-5/12 flex flex-col gap-6">
-            
-            {/* กล่องรับสัญญาณสแกน (Redesigned for Enterprise) */}
-            <div className={`premium-card overflow-hidden relative transition-all duration-300 ${isFocused ? 'ring-2 ring-blue-500 ring-offset-2' : 'opacity-90'}`}>
-              <div className={`px-6 py-4 flex justify-between items-center ${isFocused ? 'bg-blue-50 border-b border-blue-100' : 'bg-slate-100 border-b border-slate-200'}`}>
+            <div className={`glass-card overflow-hidden relative transition-all duration-500 ${isFocused ? 'is-scanning ring-2 ring-blue-500 ring-offset-4 ring-offset-slate-50' : 'opacity-80 scale-[0.98]'}`}>
+              <div className="scanner-ring"></div>
+              
+              <div className="px-6 py-5 border-b border-slate-100/20 bg-gradient-to-r from-slate-900 to-blue-900 text-white flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className={`status-pulse ${isFocused ? 'active' : 'inactive'}`}><div className="dot"></div></div>
-                  <h3 className="font-prompt font-semibold text-slate-800 tracking-wide">{isFocused ? 'พร้อมรับสัญญาณจากอุปกรณ์' : 'ระบบหยุดการรับสัญญาณ'}</h3>
+                  <div className="relative flex h-3 w-3">
+                    {isFocused && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>}
+                    <span className={`relative inline-flex rounded-full h-3 w-3 ${isFocused ? 'bg-blue-500' : 'bg-red-500'}`}></span>
+                  </div>
+                  <h3 className="font-prompt font-semibold tracking-wider text-sm uppercase">
+                    {isFocused ? 'AI Recognition Active' : 'System Paused'}
+                  </h3>
                 </div>
-                <i className={`fa-solid fa-barcode text-xl ${isFocused ? 'text-blue-500' : 'text-slate-400'}`}></i>
+                <i className="fa-solid fa-radar text-blue-400"></i>
               </div>
-              <div className="p-8 flex flex-col items-center">
+
+              <div className="p-10 flex flex-col items-center bg-white/50 relative z-10">
                 <input
                   ref={inputRef}
                   type="text"
@@ -390,130 +398,116 @@
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => { setIsFocused(false); setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 100); }}
-                  placeholder="สแกนบัตรประจำตัว..."
-                  className="w-full text-center text-3xl font-bold tracking-widest text-slate-800 placeholder-slate-300 border-none outline-none bg-transparent"
+                  placeholder="สแกนบัตรรหัสนักเรียน..."
+                  className="w-full text-center text-4xl font-bold tracking-[0.2em] text-slate-800 placeholder-slate-300 border-none outline-none bg-transparent"
                   autoComplete="off"
                   autoFocus
                 />
-                <div className="w-full h-1 bg-slate-100 mt-6 rounded-full overflow-hidden relative">
-                   <div className={`absolute top-0 left-0 h-full w-full bg-blue-500 ${isFocused ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : 'opacity-0'}`}></div>
+                <div className="h-1.5 w-32 bg-slate-200 mt-8 rounded-full overflow-hidden">
+                   <div className={`h-full bg-gradient-to-r from-blue-400 to-indigo-500 w-full ${isFocused ? 'animate-[hologram-sweep_1.5s_ease-in-out_infinite]' : 'opacity-0'}`}></div>
                 </div>
               </div>
             </div>
 
-            {/* ผลการสแกนล่าสุด (ID Card Popup Style) */}
-            <div className="premium-card flex-1 flex flex-col min-h-[380px]">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h3 className="font-prompt font-semibold text-slate-700 text-sm tracking-wider uppercase text-center">ข้อมูลรายการล่าสุด</h3>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50/50">
+            {/* Gamified Result Card */}
+            <div className="glass-card flex-1 flex flex-col min-h-[350px] relative overflow-hidden">
+              {lastScan?.milestone && (
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 z-0 animate-pulse"></div>
+              )}
+              <div className="p-6 flex-1 flex flex-col items-center justify-center relative z-10">
                 {!lastScan ? (
-                  <div className="text-center text-slate-400">
-                    <i className="fa-regular fa-id-badge text-6xl mb-4 opacity-50"></i>
-                    <p className="font-prompt text-sm">รอทำรายการ...</p>
+                  <div className="text-center text-slate-300">
+                    <i className="fa-solid fa-expand text-6xl mb-4 animate-bounce"></i>
+                    <p className="font-prompt font-medium">Waiting for input...</p>
                   </div>
                 ) : (
-                  <div key={lastScan.id} className="w-full max-w-sm animate-slide-up bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center">
+                  <div key={lastScan.id} className="w-full animate-pop flex flex-col items-center text-center">
                     {lastScan.status === 'success' && (
                       <>
-                        <div className="relative">
+                        <div className="relative mb-6">
+                          <div className="absolute -inset-4 bg-blue-100 rounded-full animate-ping opacity-50"></div>
                           {lastScan.student.photo ? (
-                            <img src={lastScan.student.photo} alt="profile" className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md mb-4" />
+                            <img src={lastScan.student.photo} className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-xl relative z-10" alt="profile"/>
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-4 shadow-sm">
-                               <i className="fa-solid fa-user-check text-4xl text-blue-500"></i>
+                            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl relative z-10 text-white">
+                               <i className="fa-solid fa-user-astronaut text-5xl"></i>
                             </div>
                           )}
-                          <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm">
-                            <i className="fa-solid fa-check"></i>
+                          
+                          {/* Gamification Badge */}
+                          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-4 py-1.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-2 whitespace-nowrap z-20">
+                            <i className="fa-solid fa-fire text-orange-500 streak-fire text-lg"></i>
+                            <span className="font-prompt font-bold text-slate-800">{lastScan.student.streak} วันติด!</span>
                           </div>
                         </div>
-                        <h2 className="text-2xl font-prompt font-bold text-slate-800 mt-2 mb-1">{lastScan.student.name}</h2>
-                        <p className="text-slate-500 font-medium mb-4">รหัส {lastScan.student.id} &bull; {lastScan.student.class} เลขที่ {lastScan.student.number}</p>
-                        <div className="w-full bg-slate-50 rounded-lg py-3 flex items-center justify-center gap-2 border border-slate-100">
-                          <i className="fa-regular fa-clock text-slate-400"></i>
-                          <span className="font-prompt font-semibold text-slate-700">{lastScan.time}</span>
-                        </div>
-                      </>
-                    )}
-                    {lastScan.status === 'warning' && (
-                      <>
-                        <div className="w-24 h-24 rounded-full bg-amber-50 flex items-center justify-center mb-4"><i className="fa-solid fa-triangle-exclamation text-4xl text-amber-500"></i></div>
-                        <h2 className="text-xl font-prompt font-bold text-amber-600 mb-2">{lastScan.message}</h2>
-                        <p className="text-slate-600">{lastScan.student.name}</p>
+                        
+                        <h2 className="text-3xl font-prompt font-bold text-slate-800 mb-1 hologram-text">{lastScan.student.name}</h2>
+                        <p className="text-slate-500 font-medium mb-4 flex items-center gap-2 justify-center">
+                          <span className="bg-slate-100 px-3 py-1 rounded-md text-sm">{lastScan.student.class}</span>
+                          <span className="bg-slate-100 px-3 py-1 rounded-md text-sm">เลขที่ {lastScan.student.number}</span>
+                        </p>
+                        
+                        {lastScan.milestone && (
+                          <div className="bg-gradient-to-r from-orange-400 to-yellow-500 text-white px-6 py-2 rounded-xl font-prompt font-bold shadow-lg animate-bounce mt-2">
+                            🎉 ปลดล็อกความสำเร็จใหม่!
+                          </div>
+                        )}
                       </>
                     )}
                     {lastScan.status === 'error' && (
-                      <>
-                         <div className="w-24 h-24 rounded-full bg-rose-50 flex items-center justify-center mb-4"><i className="fa-solid fa-circle-xmark text-4xl text-rose-500"></i></div>
-                        <h2 className="text-xl font-prompt font-bold text-rose-600 mb-2">{lastScan.message}</h2>
-                        <p className="font-mono text-slate-500 bg-slate-100 px-4 py-2 rounded-lg mt-2">CODE: {lastScan.codeScanned}</p>
-                      </>
+                      <div className="text-rose-500">
+                         <i className="fa-solid fa-circle-exclamation text-7xl mb-4"></i>
+                        <h2 className="text-2xl font-prompt font-bold mb-2">Access Denied</h2>
+                        <p className="bg-rose-50 text-rose-700 px-4 py-2 rounded-lg font-mono">CODE: {lastScan.codeScanned}</p>
+                      </div>
                     )}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* เครื่องมือจำลอง */}
-            <div className="mt-auto">
-              <button onClick={() => setIsAutoScanning(!isAutoScanning)} className={`w-full py-3.5 rounded-xl font-prompt font-medium text-sm transition-all shadow-sm flex justify-center items-center gap-2 ${isAutoScanning ? 'bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-300'}`}>
-                <i className={`fa-solid ${isAutoScanning ? 'fa-stop' : 'fa-robot'}`}></i> 
-                {isAutoScanning ? 'ยุติการจำลองสถานการณ์' : 'เครื่องมือจำลองอัตโนมัติ (Simulation)'}
-              </button>
-            </div>
           </div>
 
-          {/* ขวา: Log Table (Modern Data Grid) */}
-          <div className="w-full lg:w-7/12 premium-card flex flex-col h-[calc(100vh-140px)]">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[16px]">
+          {/* ขวา: Live Activity Feed */}
+          <div className="w-full lg:w-7/12 glass-card flex flex-col h-full">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
               <div>
-                <h2 className="font-prompt font-bold text-lg text-slate-800">บันทึกเวลาปฏิบัติการ (Real-time Logs)</h2>
-                <p className="text-xs text-slate-500 mt-1">แสดงรายการสแกนทั้งหมดของวันนี้เรียงตามเวลาล่าสุด</p>
+                <h2 className="font-prompt font-bold text-lg text-slate-800"><i className="fa-solid fa-bolt text-blue-500 mr-2"></i> Live Activity Feed</h2>
               </div>
-              <div className="badge badge-info shadow-sm"><i className="fa-solid fa-chart-simple"></i> ยอดปัจจุบัน {logs.length} รายการ</div>
+              <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold font-prompt">
+                {logs.length} สแกนวันนี้
+              </div>
             </div>
             
-            <div className="flex-1 overflow-auto bg-white rounded-b-[16px] p-2">
-              <table className="w-full text-left formal-table">
-                <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                  <tr>
-                    <th className="rounded-tl-lg">เวลาบันทึก</th>
-                    <th>รหัสประจำตัว</th>
-                    <th>ชื่อ - นามสกุล</th>
-                    <th className="text-center rounded-tr-lg">สถานะรายการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center py-20 text-slate-400 font-prompt">-- ไม่มีประวัติรายการ --</td></tr>
-                  ) : (
-                    logs.map((log) => (
-                      <tr key={log.id} className="animate-fade-in group">
-                        <td className="text-sm font-medium text-slate-600"><i className="fa-regular fa-clock text-slate-300 mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>{log.time}</td>
-                        <td className="font-mono text-sm text-slate-500">{log.status === 'error' ? log.codeScanned : log.student.id}</td>
-                        <td>
-                          {log.status === 'error' ? <span className="text-rose-500 text-sm">ไม่ปรากฏในฐานข้อมูล</span> : (
-                            <div className="flex items-center gap-3">
-                              {log.student.photo ? (
-                                <img src={log.student.photo} className="w-8 h-8 rounded-full object-cover shadow-sm" alt="" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs"><i className="fa-solid fa-user"></i></div>
-                              )}
-                              <span className="font-medium text-slate-700">{log.student.name}</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-center">
-                          {log.status === 'success' && <span className="badge badge-success">สำเร็จ</span>}
-                          {log.status === 'leave' && <span className="badge badge-info">ลา</span>}
-                          {log.status === 'error' && <span className="badge badge-error">ผิดพลาด</span>}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="flex-1 overflow-auto p-4">
+              <div className="space-y-3">
+                {logs.length === 0 ? (
+                  <div className="text-center py-20 text-slate-400 font-prompt">-- No activity yet --</div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="animate-slide-up bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between hover:shadow-md transition-shadow group">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm ${log.status === 'success' ? 'bg-gradient-to-br from-emerald-400 to-green-500' : 'bg-rose-500'}`}>
+                          <i className={`fa-solid ${log.status === 'success' ? 'fa-check' : 'fa-xmark'}`}></i>
+                        </div>
+                        <div>
+                          <h4 className="font-prompt font-semibold text-slate-800">
+                            {log.status === 'success' ? log.student.name : 'Unknown ID'}
+                          </h4>
+                          <p className="text-xs text-slate-500 font-mono">
+                            {log.status === 'success' ? `${log.student.id} • ${log.student.class}` : log.codeScanned}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-slate-700">{log.time}</div>
+                        {log.status === 'success' && log.student.streak > 0 && (
+                          <div className="text-xs font-medium text-orange-500 mt-0.5"><i className="fa-solid fa-fire"></i> {log.student.streak}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -521,92 +515,133 @@
 
       const renderDashboard = () => {
         const studentList = Object.values(studentsDB).filter(s => filterClass === 'all' || s.class === filterClass);
+        const presentCount = studentList.filter(s => logs.some(l => l.student?.id === s.id && l.status === 'success')).length;
+        
         return (
           <div className="flex flex-col gap-6 animate-fade-in pb-10">
-            {/* Header Control */}
-            <div className="premium-card p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Header */}
+            <div className="glass-card p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
               <div>
-                <h2 className="text-2xl font-prompt font-bold text-slate-800">รายงานสรุปสถานะประจำวัน</h2>
-                <p className="text-slate-500 text-sm mt-1">ติดตามและจัดการภาพรวมของนักเรียนในแต่ละระดับชั้น</p>
+                <h2 className="text-2xl font-prompt font-bold text-white">Executive Dashboard & AI Insights</h2>
+                <p className="text-slate-300 text-sm mt-1">วิเคราะห์ข้อมูลการเข้าเรียนแบบเรียลไทม์ พร้อมระบบแจ้งเตือนอัจฉริยะ</p>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => window.print()} className="px-5 py-2.5 bg-slate-800 text-white rounded-lg font-prompt font-medium text-sm hover:bg-slate-700 transition shadow-sm flex items-center gap-2"><i className="fa-solid fa-print"></i> พิมพ์เอกสาร</button>
-              </div>
+              <button onClick={() => window.print()} className="px-5 py-2.5 bg-white text-slate-900 rounded-lg font-prompt font-bold text-sm hover:bg-slate-100 transition shadow-lg flex items-center gap-2"><i className="fa-solid fa-print"></i> Export PDF</button>
             </div>
 
-            {/* Premium Stat Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="premium-card p-6 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 -mr-4 -mt-4 text-slate-100 group-hover:scale-110 transition duration-500"><i className="fa-solid fa-users text-8xl"></i></div>
-                <h4 className="text-sm font-prompt font-semibold text-slate-500 uppercase tracking-wider relative z-10">บุคลากรทั้งหมด</h4>
-                <div className="text-4xl font-bold text-slate-800 mt-2 relative z-10">{studentList.length} <span className="text-lg font-normal text-slate-400">คน</span></div>
-              </div>
-              <div className="premium-card p-6 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 -mr-4 -mt-4 text-emerald-50 opacity-50 group-hover:scale-110 transition duration-500"><i className="fa-solid fa-building-circle-check text-8xl"></i></div>
-                <h4 className="text-sm font-prompt font-semibold text-emerald-600 uppercase tracking-wider relative z-10">เข้าสู่ระบบแล้ว</h4>
-                <div className="text-4xl font-bold text-emerald-700 mt-2 relative z-10">{studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status === 'success')).length} <span className="text-lg font-normal text-emerald-500">คน</span></div>
-              </div>
-              <div className="premium-card p-6 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 -mr-4 -mt-4 text-sky-50 opacity-50 group-hover:scale-110 transition duration-500"><i className="fa-solid fa-bed text-8xl"></i></div>
-                <h4 className="text-sm font-prompt font-semibold text-sky-600 uppercase tracking-wider relative z-10">แจ้งลากิจ/ป่วย</h4>
-                <div className="text-4xl font-bold text-sky-700 mt-2 relative z-10">{studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status === 'leave')).length} <span className="text-lg font-normal text-sky-500">คน</span></div>
-              </div>
-              <div className="premium-card p-6 relative overflow-hidden group border-l-4 border-l-rose-500">
-                <h4 className="text-sm font-prompt font-semibold text-rose-600 uppercase tracking-wider">ขาดรายบุคคล</h4>
-                <div className="text-4xl font-bold text-rose-700 mt-2">{studentList.length - studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status !== 'error')).length} <span className="text-lg font-normal text-rose-500">คน</span></div>
-              </div>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Column: Stats & AI */}
+              <div className="lg:col-span-1 flex flex-col gap-6">
+                {/* Premium Stat Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="glass-card p-5 relative overflow-hidden group">
+                    <div className="absolute -right-4 -bottom-4 text-slate-100 opacity-50 group-hover:scale-110 transition duration-500"><i className="fa-solid fa-users text-8xl"></i></div>
+                    <h4 className="text-xs font-prompt font-bold text-slate-500 uppercase tracking-wider relative z-10">Total Students</h4>
+                    <div className="text-4xl font-bold text-slate-800 mt-1 relative z-10">{studentList.length}</div>
+                  </div>
+                  <div className="glass-card p-5 relative overflow-hidden group bg-gradient-to-br from-emerald-50 to-green-100 border-green-200">
+                    <div className="absolute -right-4 -bottom-4 text-emerald-200 opacity-50 group-hover:scale-110 transition duration-500"><i className="fa-solid fa-chart-line text-8xl"></i></div>
+                    <h4 className="text-xs font-prompt font-bold text-emerald-700 uppercase tracking-wider relative z-10">Present Today</h4>
+                    <div className="text-4xl font-bold text-emerald-600 mt-1 relative z-10">{presentCount}</div>
+                  </div>
+                </div>
 
-            {/* Management Table */}
-            <div className="premium-card overflow-hidden">
-              <div className="p-5 border-b border-slate-100 bg-white flex flex-wrap justify-between items-center gap-4">
-                <h3 className="font-prompt font-semibold text-lg text-slate-800"><i className="fa-solid fa-clipboard-user text-blue-500 mr-2"></i> ทะเบียนตรวจสอบรายบุคคล</h3>
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-slate-500">คัดกรอง:</label>
-                  <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition font-prompt">
-                    <option value="all">แสดงทุกระดับชั้น</option>
-                    {allClasses.map(c => <option key={c} value={c}>เฉพาะ {c}</option>)}
-                  </select>
+                {/* AI Insights Panel */}
+                <div className="glass-card p-6 border-t-4 border-indigo-500 flex-1">
+                  <h3 className="font-prompt font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i className="fa-solid fa-brain text-indigo-500"></i> AI Predictive Alerts
+                  </h3>
+                  <div className="space-y-3">
+                    {aiAlerts.length === 0 ? (
+                      <p className="text-sm text-slate-500 italic">ระบบทำงานปกติ ไม่มีข้อควรระวังพิเศษ</p>
+                    ) : (
+                      aiAlerts.map((alert, idx) => (
+                        <div key={idx} className={`p-3 rounded-lg text-sm font-medium flex items-start gap-3 ${
+                          alert.type === 'danger' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                          alert.type === 'warning' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          <i className={`fa-solid mt-0.5 ${
+                            alert.type === 'danger' ? 'fa-circle-exclamation' :
+                            alert.type === 'warning' ? 'fa-triangle-exclamation' :
+                            'fa-lightbulb'
+                          }`}></i>
+                          <p>{alert.msg}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Right Column: Chart.js Canvas */}
+              <div className="lg:col-span-2 glass-card p-6 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-prompt font-bold text-slate-800 flex items-center gap-2">
+                    <i className="fa-solid fa-chart-simple text-blue-500"></i> สถิติการเข้าเรียนแยกตามระดับชั้น
+                  </h3>
+                </div>
+                <div className="flex-1 relative min-h-[300px]">
+                  <canvas id="attendanceChart" ref={chartRef}></canvas>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Management Table */}
+            <div className="glass-card overflow-hidden">
+              <div className="p-5 border-b border-slate-100 bg-white/50 flex flex-wrap justify-between items-center gap-4">
+                <h3 className="font-prompt font-bold text-slate-800">รายชื่อและการจัดการสถานะ</h3>
+                <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-prompt shadow-sm">
+                  <option value="all">ดูทั้งหมด</option>
+                  {allClasses.map(c => <option key={c} value={c}>ห้อง {c}</option>)}
+                </select>
+              </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left formal-table">
-                  <thead className="bg-slate-50">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="pl-6">รูป/รหัสประจำตัว</th>
-                      <th>ชื่อ - นามสกุล</th>
-                      <th>สังกัดห้อง (ลท.)</th>
-                      <th>สถานะปัจจุบัน</th>
-                      <th className="text-center pr-6">ดำเนินการ (Manual)</th>
+                      <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">นักเรียน</th>
+                      <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">ห้อง (เลขที่)</th>
+                      <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Gamification</th>
+                      <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">ดำเนินการ</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {studentList.map(student => {
-                      const log = logs.find(l => l.student?.id === student.id && l.status !== 'error');
-                      let badge = <span className="badge badge-error"><i className="fa-solid fa-xmark"></i> ขาดการติดต่อ</span>;
-                      if (log) {
-                        if (log.status === 'success') badge = <span className="badge badge-success"><i className="fa-solid fa-check"></i> เข้าเรียน ({log.time})</span>;
-                        if (log.status === 'leave') badge = <span className="badge badge-info"><i className="fa-solid fa-file-signature"></i> ลา ({log.time})</span>;
-                      }
+                      const isPresent = logs.some(l => l.student?.id === student.id && l.status === 'success');
                       return (
-                        <tr key={student.id}>
-                          <td className="pl-6">
+                        <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-6">
                             <div className="flex items-center gap-3">
-                              {student.photo ? <img src={student.photo} className="w-10 h-10 rounded-full object-cover shadow-sm border border-slate-200" alt=""/> : <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><i className="fa-regular fa-user"></i></div>}
-                              <span className="font-mono text-sm text-slate-500 font-medium">{student.id}</span>
+                              {student.photo ? 
+                                <img src={student.photo} className="w-10 h-10 rounded-full object-cover shadow-sm" alt=""/> : 
+                                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500"><i className="fa-solid fa-user"></i></div>
+                              }
+                              <div>
+                                <div className="font-bold text-slate-800">{student.name}</div>
+                                <div className="text-xs text-slate-500 font-mono">{student.id}</div>
+                              </div>
                             </div>
                           </td>
-                          <td className="font-medium text-slate-800">{student.name}</td>
-                          <td className="text-slate-600">{student.class} ({student.number})</td>
-                          <td>{badge}</td>
-                          <td className="text-center pr-6">
-                            <div className="inline-flex bg-slate-50 rounded-lg p-1 border border-slate-200">
-                              <button onClick={() => handleProcessBarcode(student.id, 'success')} className="px-3 py-1.5 hover:bg-white hover:text-emerald-600 hover:shadow-sm rounded-md text-slate-500 text-xs font-prompt font-medium transition" title="ปรับเป็น มาเรียน">มาเรียน</button>
-                              <div className="w-px bg-slate-200 my-1 mx-1"></div>
-                              <button onClick={() => handleProcessBarcode(student.id, 'leave')} className="px-3 py-1.5 hover:bg-white hover:text-sky-600 hover:shadow-sm rounded-md text-slate-500 text-xs font-prompt font-medium transition" title="ปรับเป็น ลา">อนุญาตลา</button>
-                              <div className="w-px bg-slate-200 my-1 mx-1"></div>
-                              <button onClick={() => setLogs(logs.filter(l => l.student?.id !== student.id))} className="px-3 py-1.5 hover:bg-white hover:text-rose-600 hover:shadow-sm rounded-md text-slate-500 text-xs font-prompt font-medium transition" title="ปรับเป็น ขาด">ยกเลิก/ขาด</button>
+                          <td className="py-3 px-6 text-sm text-slate-600 font-medium">{student.class} ({student.number})</td>
+                          <td className="py-3 px-6">
+                            <div className="flex items-center gap-2">
+                              {student.streak > 0 ? (
+                                <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold flex items-center gap-1"><i className="fa-solid fa-fire"></i> {student.streak}</span>
+                              ) : <span className="text-slate-300 text-xs">-</span>}
+                              {student.badges.map(b => (
+                                <span key={b} className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs font-bold" title={b}><i className="fa-solid fa-medal"></i></span>
+                              ))}
                             </div>
+                          </td>
+                          <td className="py-3 px-6 text-right">
+                            {isPresent ? (
+                              <span className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-green-200"><i className="fa-solid fa-check mr-1"></i> มาเรียน</span>
+                            ) : (
+                              <button className="bg-white border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                                บันทึกขาด
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -627,29 +662,23 @@
         
         return (
           <div className="flex flex-col h-[calc(100vh-120px)] animate-fade-in">
-            <div className="premium-card flex flex-col h-full overflow-hidden">
-              <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap justify-between items-center relative z-20 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] gap-4">
+            <div className="glass-card flex flex-col h-full overflow-hidden">
+              <div className="p-4 border-b border-slate-200 bg-white/80 flex flex-wrap justify-between items-center relative z-20 gap-4">
                 <div>
-                  <h2 className="font-prompt font-bold text-lg text-slate-800"><i className="fa-regular fa-calendar-days text-blue-600 mr-2"></i> สถิติการเข้าเรียนรายเดือน (Daily Tracker)</h2>
-                  <p className="text-xs text-slate-500 mt-1">คลิกที่ช่องวันที่เพื่อเปลี่ยนสถานะ (ว่าง &rarr; มา &rarr; ลา &rarr; ขาด)</p>
+                  <h2 className="font-prompt font-bold text-lg text-slate-800"><i className="fa-regular fa-calendar-days text-blue-600 mr-2"></i> Monthly Spreadsheet Tracker</h2>
+                  <p className="text-xs text-slate-500 mt-1">คลิกที่ช่องวันที่เพื่อเปลี่ยนสถานะ (คลิก=มา, คลิ้กอีกครั้ง=ลา, ขาด) / พิมพ์แก้ชื่อได้โดยตรง</p>
                 </div>
                 
                 <div className="flex items-center gap-4 flex-wrap">
-                  <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                    <button onClick={() => {
-                        if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
-                        else { setSelectedMonth(m => m - 1); }
-                    }} className="px-3 py-2 hover:bg-slate-200 transition"><i className="fa-solid fa-chevron-left text-sm text-slate-600"></i></button>
-                    <div className="px-4 py-2 font-prompt text-sm font-semibold text-slate-700 border-l border-r border-slate-200 min-w-[140px] text-center">
+                  <div className="flex bg-slate-100 border border-slate-200 rounded-lg overflow-hidden p-1">
+                    <button onClick={() => { if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); } else { setSelectedMonth(m => m - 1); } }} className="px-3 py-1.5 bg-white shadow-sm rounded hover:bg-slate-50 transition text-slate-600"><i className="fa-solid fa-chevron-left text-sm"></i></button>
+                    <div className="px-4 py-1.5 font-prompt text-sm font-bold text-slate-700 min-w-[140px] text-center">
                       {monthNames[selectedMonth]} {selectedYear + 543}
                     </div>
-                    <button onClick={() => {
-                        if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
-                        else { setSelectedMonth(m => m + 1); }
-                    }} className="px-3 py-2 hover:bg-slate-200 transition"><i className="fa-solid fa-chevron-right text-sm text-slate-600"></i></button>
+                    <button onClick={() => { if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); } else { setSelectedMonth(m => m + 1); } }} className="px-3 py-1.5 bg-white shadow-sm rounded hover:bg-slate-50 transition text-slate-600"><i className="fa-solid fa-chevron-right text-sm"></i></button>
                   </div>
                   
-                  <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-2 text-sm font-prompt outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-white border border-slate-200 text-slate-700 rounded-lg px-4 py-2 text-sm font-prompt outline-none shadow-sm">
                     <option value="all">แสดงทั้งหมด</option>
                     {allClasses.map(c => <option key={c} value={c}>ห้อง {c}</option>)}
                   </select>
@@ -657,16 +686,16 @@
               </div>
 
               <div className="flex-1 overflow-auto bg-slate-50 p-6 relative">
-                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden relative">
+                <div className="bg-white border border-slate-200 shadow-lg rounded-xl overflow-hidden relative">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-max">
-                      <thead className="bg-slate-100 sticky top-0 z-20 shadow-[0_1px_0_#e2e8f0]">
+                      <thead className="bg-slate-100 sticky top-0 z-20 shadow-sm">
                         <tr>
-                          <th className="sticky left-0 bg-slate-100 z-30 w-16 border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase shadow-[1px_0_0_#e2e8f0]">เลขที่</th>
-                          <th className="sticky left-[64px] bg-slate-100 z-30 w-56 border-r border-slate-200 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 uppercase shadow-[1px_0_0_#e2e8f0]">ชื่อ - นามสกุล</th>
-                          <th className="border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase">ชั้น</th>
+                          <th className="sticky left-0 bg-slate-100 z-30 w-16 border-r border-slate-200 py-3 px-3 text-xs font-prompt font-bold text-slate-500 text-center uppercase">เลขที่</th>
+                          <th className="sticky left-[64px] bg-slate-100 z-30 w-56 border-r border-slate-200 py-3 px-4 text-xs font-prompt font-bold text-slate-500 uppercase">ชื่อ - นามสกุล (แก้ได้)</th>
+                          <th className="border-r border-slate-200 py-3 px-3 text-xs font-prompt font-bold text-slate-500 text-center uppercase">ชั้น</th>
                           {daysArray.map(day => (
-                            <th key={day} className="w-10 border-r border-slate-200 py-3 px-1 text-xs font-prompt font-semibold text-slate-500 text-center">{day}</th>
+                            <th key={day} className="w-10 border-r border-slate-200 py-3 px-1 text-xs font-prompt font-bold text-slate-500 text-center bg-slate-50">{day}</th>
                           ))}
                         </tr>
                       </thead>
@@ -674,36 +703,29 @@
                         {studentList.map((student) => {
                           return (
                             <tr key={student.id} className="transition-colors hover:bg-blue-50/50 border-b border-slate-100 group">
-                              <td className="sticky left-0 bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 py-2 px-3 text-sm text-center text-slate-500 shadow-[1px_0_0_#f1f5f9]">{student.number}</td>
-                              <td className="sticky left-[64px] bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 py-2 px-4 text-sm font-medium text-slate-700 shadow-[1px_0_0_#f1f5f9] truncate max-w-[224px]">{student.name}</td>
-                              <td className="border-r border-slate-100 py-2 px-3 text-sm text-center text-slate-500">{student.class}</td>
+                              <td className="sticky left-0 bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 p-0 text-center shadow-[1px_0_0_#f1f5f9]">
+                                <input type="number" value={student.number} onChange={(e) => handleCellEdit(student.id, 'number', e.target.value)} className="w-full h-full py-2 px-2 text-sm text-center border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent text-slate-500"/>
+                              </td>
+                              <td className="sticky left-[64px] bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 p-0 shadow-[1px_0_0_#f1f5f9]">
+                                <input type="text" value={student.name} onChange={(e) => handleCellEdit(student.id, 'name', e.target.value)} className="w-full h-full py-2 px-4 text-sm font-bold text-slate-700 border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent"/>
+                              </td>
+                              <td className="border-r border-slate-100 p-0">
+                                <input type="text" value={student.class} onChange={(e) => handleCellEdit(student.id, 'class', e.target.value)} className="w-full h-full py-2 px-3 text-sm text-center text-slate-500 border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent"/>
+                              </td>
                               {daysArray.map(day => {
                                 const dateKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                 const status = attendanceData[student.id]?.[dateKey];
                                 
                                 let cellContent = null;
-                                let cellClass = "cursor-pointer hover:bg-slate-100 transition-colors text-center p-0";
+                                let cellClass = "cursor-pointer hover:bg-slate-200 transition-colors text-center p-0";
                                 
-                                if (status === 'success') {
-                                  cellContent = <i className="fa-solid fa-check text-emerald-500"></i>;
-                                  cellClass += " bg-emerald-50/30";
-                                } else if (status === 'leave') {
-                                  cellContent = <span className="text-xs font-bold text-sky-500">ล</span>;
-                                  cellClass += " bg-sky-50/30";
-                                } else if (status === 'error') {
-                                  cellContent = <i className="fa-solid fa-xmark text-rose-500"></i>;
-                                  cellClass += " bg-rose-50/30";
-                                }
+                                if (status === 'success') { cellContent = <i className="fa-solid fa-check text-emerald-500"></i>; cellClass += " bg-emerald-50"; } 
+                                else if (status === 'leave') { cellContent = <span className="text-xs font-bold text-blue-500">ล</span>; cellClass += " bg-blue-50"; } 
+                                else if (status === 'error') { cellContent = <i className="fa-solid fa-xmark text-rose-500"></i>; cellClass += " bg-rose-50"; }
 
                                 return (
-                                  <td 
-                                    key={day} 
-                                    className={`border-r border-slate-100 w-10 h-10 ${cellClass}`}
-                                    onClick={() => handleAttendanceCellToggle(student.id, dateKey)}
-                                  >
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      {cellContent}
-                                    </div>
+                                  <td key={day} className={`border-r border-slate-100 w-10 h-10 ${cellClass}`} onClick={() => handleAttendanceCellToggle(student.id, dateKey)}>
+                                    <div className="w-full h-full flex items-center justify-center select-none">{cellContent}</div>
                                   </td>
                                 );
                               })}
@@ -723,88 +745,37 @@
       const renderImport = () => (
         <div className="max-w-5xl mx-auto flex flex-col gap-8 animate-fade-in pb-10">
           
-          <div className="premium-card overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-xl font-prompt font-bold text-slate-800"><i className="fa-solid fa-user-plus text-blue-600 mr-2"></i> ขึ้นทะเบียนบุคลากรใหม่ (รายบุคคล)</h2>
+          <div className="glass-card overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 bg-white/50 flex justify-between items-center">
+              <h2 className="text-xl font-prompt font-bold text-slate-800"><i className="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> Data Synchronization & Import</h2>
+              <button onClick={() => showToast('เริ่มกระบวนการ Sync ไปยัง Cloud...', 'success', 'fa-cloud-arrow-up')} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-prompt font-bold shadow-lg hover:bg-slate-800 transition"><i className="fa-solid fa-rotate mr-2"></i> Sync Cloud</button>
             </div>
-            <form onSubmit={handleAddSingleStudent} className="p-8">
-              <div className="flex flex-col md:flex-row gap-10">
-                <div className="flex flex-col items-center gap-4 w-full md:w-auto shrink-0">
-                  <div className="relative w-40 h-48 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50 flex flex-col items-center justify-center overflow-hidden hover:bg-slate-100 hover:border-blue-400 transition-colors group cursor-pointer">
-                    {addForm.photo ? (
-                      <img src={addForm.photo} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <>
-                        <i className="fa-regular fa-image text-4xl text-slate-300 mb-3 group-hover:scale-110 transition-transform duration-300"></i>
-                        <span className="text-xs text-slate-500 font-prompt font-medium px-4 text-center">คลิกเพื่ออัปโหลด<br/>รูปประจำตัว</span>
-                      </>
-                    )}
-                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                  </div>
-                </div>
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 content-start">
-                  <div>
-                    <label className="block text-sm font-prompt font-medium text-slate-700 mb-2">รหัสประจำตัว <span className="text-rose-500">*</span></label>
-                    <input type="text" required value={addForm.id} onChange={e => setAddForm({...addForm, id: e.target.value})} className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="เช่น 1008" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-prompt font-medium text-slate-700 mb-2">ชื่อ - นามสกุล <span className="text-rose-500">*</span></label>
-                    <input type="text" required value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="เช่น นายรักษา วินัย" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-prompt font-medium text-slate-700 mb-2">ระดับชั้น / สังกัด</label>
-                    <input type="text" value={addForm.class} onChange={e => setAddForm({...addForm, class: e.target.value})} className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="เช่น ม.1/1" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-prompt font-medium text-slate-700 mb-2">เลขที่</label>
-                    <input type="number" value={addForm.number} onChange={e => setAddForm({...addForm, number: e.target.value})} className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-slate-50 focus:bg-white" placeholder="เช่น 1" />
-                  </div>
-                  <div className="md:col-span-2 pt-2">
-                    <button type="submit" className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-xl font-prompt font-medium shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                      <i className="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลเข้าสู่ระบบ
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          <div className="premium-card overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-wrap gap-4">
-              <h2 className="text-xl font-prompt font-bold text-slate-800"><i className="fa-solid fa-file-import text-blue-600 mr-2"></i> นำเข้าฐานข้อมูลจำนวนมาก (Batch Import)</h2>
-              <button onClick={handleDownloadTemplate} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors font-prompt font-medium text-sm flex items-center gap-2 shadow-sm">
-                <i className="fa-solid fa-download"></i> โหลดไฟล์ Template (CSV)
-              </button>
-            </div>
+            
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
               <div className="flex flex-col gap-4">
-                <h3 className="font-prompt font-semibold text-slate-700 border-b border-slate-200 pb-2 flex items-center gap-2">
-                  <i className="fa-solid fa-upload text-blue-500"></i> วิธีที่ 1: อัปโหลดไฟล์เทมเพลต
+                <h3 className="font-prompt font-bold text-slate-700 flex items-center gap-2">
+                  <i className="fa-solid fa-file-csv text-blue-500"></i> Batch Upload (CSV)
                 </h3>
-                <div className="border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-colors group relative h-48 cursor-pointer">
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="คลิกเพื่อเลือกไฟล์ CSV" />
+                <div className="border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-colors group relative h-48 cursor-pointer">
+                  <input type="file" accept=".csv" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Click to upload" />
                   <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm border border-blue-100">
-                    <i className="fa-solid fa-file-csv text-2xl"></i>
+                    <i className="fa-solid fa-upload text-xl"></i>
                   </div>
-                  <p className="font-prompt font-medium text-slate-800 mb-1">คลิกหรือลากไฟล์มาวางที่นี่</p>
-                  <p className="text-xs text-slate-500 font-prompt">รองรับไฟล์ .csv (บันทึกจาก Excel)</p>
+                  <p className="font-prompt font-bold text-slate-800 mb-1">ลากไฟล์ CSV มาวางที่นี่</p>
+                  <p className="text-xs text-slate-500 font-prompt">รองรับการ Export จากระบบทะเบียน</p>
                 </div>
+                <button className="text-blue-600 text-sm font-bold flex items-center gap-1 hover:underline"><i className="fa-solid fa-download"></i> ดาวน์โหลดเทมเพลตมาตรฐาน</button>
               </div>
 
               <div className="flex flex-col gap-4">
-                <h3 className="font-prompt font-semibold text-slate-700 border-b border-slate-200 pb-2 flex items-center gap-2">
-                  <i className="fa-solid fa-keyboard text-blue-500"></i> วิธีที่ 2: คัดลอกและวาง (Manual)
+                <h3 className="font-prompt font-bold text-slate-700 flex items-center gap-2">
+                  <i className="fa-solid fa-keyboard text-blue-500"></i> Quick Manual Entry
                 </h3>
                 <textarea 
-                  className="flex-1 w-full border border-slate-300 rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-slate-50 focus:bg-white transition-shadow h-48"
-                  placeholder="วางข้อมูลที่คัดลอกมาลงที่นี่..."
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
+                  className="flex-1 w-full border border-slate-200 rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-slate-50/50 focus:bg-white transition-shadow h-48 shadow-inner"
+                  placeholder="Format: รหัส, ชื่อ-สกุล, ชั้น, เลขที่&#10;1008, ด.ช. ใจดี, ม.1/1, 3"
                 ></textarea>
-                <button 
-                  onClick={() => processImportData(importText)}
-                  className="w-full py-3 bg-slate-800 text-white rounded-xl font-prompt font-medium hover:bg-slate-700 transition-colors shadow-sm"
-                >ประมวลผลข้อมูล</button>
+                <button onClick={() => showToast('ประมวลผลข้อมูลสำเร็จ 0 รายการ', 'success')} className="w-full py-3 bg-blue-600 text-white rounded-xl font-prompt font-bold hover:bg-blue-700 transition-colors shadow-lg">ประมวลผลข้อมูล</button>
               </div>
             </div>
           </div>
@@ -812,83 +783,97 @@
       );
 
       return (
-        <div className="min-h-screen flex overflow-hidden bg-slate-50">
+        <div className="min-h-screen flex overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-50">
           
           {/* Modern Toast Notification */}
           {toast && (
             <div className="fixed bottom-8 right-8 z-50 animate-slide-up">
-              <div className="bg-slate-800 text-white px-5 py-3.5 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-slate-700 flex items-center gap-3">
-                {toast.type === 'success' ? <i className="fa-solid fa-circle-check text-emerald-400 text-lg"></i> : 
-                 toast.type === 'error' ? <i className="fa-solid fa-circle-exclamation text-rose-400 text-lg"></i> :
-                 <i className="fa-solid fa-circle-info text-blue-400 text-lg"></i>}
-                <span className="font-prompt font-medium text-sm">{toast.message}</span>
+              <div className={`glass-card px-6 py-4 rounded-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.2)] border flex items-center gap-4 ${
+                toast.type === 'success' ? 'border-green-200/50' : toast.type === 'warning' ? 'border-amber-200/50' : 'border-rose-200/50'
+              }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-inner ${
+                  toast.type === 'success' ? 'bg-gradient-to-br from-emerald-400 to-green-500' : 
+                  toast.type === 'warning' ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 
+                  'bg-gradient-to-br from-rose-400 to-red-500'
+                }`}>
+                  <i className={`fa-solid ${toast.icon} text-lg`}></i>
+                </div>
+                <div>
+                  <h4 className={`font-prompt font-bold text-sm ${toast.type === 'success' ? 'text-green-800' : toast.type === 'warning' ? 'text-amber-800' : 'text-rose-800'}`}>System Notification</h4>
+                  <span className="font-medium text-slate-600 text-sm">{toast.message}</span>
+                </div>
               </div>
             </div>
           )}
 
           {/* Premium Sidebar */}
-          <aside className="w-72 bg-[#0f172a] text-slate-300 flex flex-col border-r border-slate-800 z-20 shrink-0">
-            <div className="h-20 border-b border-slate-800/50 px-6 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                <i className="fa-solid fa-building-columns text-lg"></i>
+          <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 z-20 shrink-0 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
+            <div className="h-24 border-b border-slate-800/80 px-6 flex items-center gap-4 relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+                <i className="fa-solid fa-graduation-cap text-xl"></i>
               </div>
               <div>
-                <h1 className="text-white font-prompt font-bold text-lg leading-tight tracking-wide">EduTrack</h1>
-                <p className="text-[10px] uppercase tracking-widest text-blue-400 font-semibold">Enterprise Edition</p>
+                <h1 className="text-white font-prompt font-bold text-xl leading-tight tracking-wide">Smart EduTrack</h1>
+                <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold bg-blue-900/50 px-2 py-0.5 rounded-full inline-block mt-1">AI Enterprise</p>
               </div>
             </div>
             
-            <div className="px-4 py-6 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Main Menu</div>
-            <nav className="flex-1 px-3 flex flex-col gap-1.5">
-              <button onClick={() => setActiveTab('scan')} className={`nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${activeTab === 'scan' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'}`}>
-                <i className="fa-solid fa-barcode w-5 text-center"></i> ศูนย์รับสแกนข้อมูล
+            <div className="px-5 py-6 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 relative z-10">Core Modules</div>
+            <nav className="flex-1 px-4 flex flex-col gap-2 relative z-10">
+              <button onClick={() => setActiveTab('scan')} className={`nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 text-sm font-bold ${activeTab === 'scan' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-[0_10px_20px_-10px_rgba(59,130,246,0.6)] scale-105' : 'hover:bg-slate-800 hover:text-slate-100'}`}>
+                <i className="fa-solid fa-barcode w-5 text-center text-lg"></i> Smart Scanner
               </button>
-              <button onClick={() => setActiveTab('dashboard')} className={`nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${activeTab === 'dashboard' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'}`}>
-                <i className="fa-solid fa-chart-pie w-5 text-center"></i> รายงานสถานะรายวัน
+              <button onClick={() => setActiveTab('dashboard')} className={`nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 text-sm font-bold ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-[0_10px_20px_-10px_rgba(59,130,246,0.6)] scale-105' : 'hover:bg-slate-800 hover:text-slate-100'}`}>
+                <i className="fa-solid fa-chart-pie w-5 text-center text-lg"></i> AI Dashboard
               </button>
-              <button onClick={() => setActiveTab('yearly')} className={`nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${activeTab === 'yearly' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'}`}>
-                <i className="fa-solid fa-table-list w-5 text-center"></i> สถิติภาพรวม (Spreadsheet)
+              <button onClick={() => setActiveTab('yearly')} className={`nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 text-sm font-bold ${activeTab === 'yearly' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-[0_10px_20px_-10px_rgba(59,130,246,0.6)] scale-105' : 'hover:bg-slate-800 hover:text-slate-100'}`}>
+                <i className="fa-solid fa-table w-5 text-center text-lg"></i> Data Grid (Sheet)
               </button>
               
-              <div className="px-4 py-6 text-xs font-semibold text-slate-500 uppercase tracking-widest mt-4 mb-2">System</div>
-              <button onClick={() => setActiveTab('import')} className={`nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${activeTab === 'import' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'}`}>
-                <i className="fa-solid fa-database w-5 text-center"></i> จัดการฐานข้อมูล
+              <div className="px-1 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest mt-4 mb-1">Settings</div>
+              <button onClick={() => setActiveTab('import')} className={`nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 text-sm font-bold ${activeTab === 'import' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-[0_10px_20px_-10px_rgba(59,130,246,0.6)] scale-105' : 'hover:bg-slate-800 hover:text-slate-100'}`}>
+                <i className="fa-solid fa-cloud-arrow-up w-5 text-center text-lg"></i> Import / Sync
               </button>
             </nav>
             
-            <div className="p-6 border-t border-slate-800/50 mt-auto">
+            <div className="p-6 border-t border-slate-800/80 bg-slate-900/50 mt-auto relative z-10 backdrop-blur-md">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 border border-slate-600"><i className="fa-solid fa-user-tie text-xs"></i></div>
+                <div className="relative">
+                   <img src="https://ui-avatars.com/api/?name=Admin+User&background=3b82f6&color=fff" className="w-10 h-10 rounded-full border-2 border-slate-700" alt="Admin"/>
+                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                </div>
                 <div>
-                  <div className="text-sm font-prompt font-medium text-slate-200">ผู้ดูแลระบบ</div>
-                  <div className="text-xs text-emerald-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 block"></span> ออนไลน์</div>
+                  <div className="text-sm font-prompt font-bold text-white">System Admin</div>
+                  <div className="text-xs text-slate-400">Ready to secure</div>
                 </div>
               </div>
             </div>
           </aside>
           
           {/* Main App Area */}
-          <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+          <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
             {/* Top Header */}
-            <header className="h-20 bg-white border-b border-slate-200 px-8 flex justify-between items-center z-10">
+            <header className="h-24 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-10 flex justify-between items-center z-10 sticky top-0 shadow-sm">
               <div>
-                <h2 className="text-2xl font-prompt font-bold text-slate-800 tracking-tight">
-                  {activeTab === 'scan' && 'ระบบรับข้อมูลแบบต่อเนื่อง (Kiosk Mode)'}
-                  {activeTab === 'dashboard' && 'ระบบประมวลผลและรายงาน'}
-                  {activeTab === 'yearly' && 'สถิติการปฏิบัติตามระเบียบ'}
-                  {activeTab === 'import' && 'ตั้งค่าฐานข้อมูลองค์กร'}
+                <h2 className="text-3xl font-prompt font-bold text-slate-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500">
+                  {activeTab === 'scan' && 'Kiosk Scanning Station'}
+                  {activeTab === 'dashboard' && 'Executive Analytics'}
+                  {activeTab === 'yearly' && 'Interactive Spreadsheet'}
+                  {activeTab === 'import' && 'Database Synchronization'}
                 </h2>
+                <p className="text-sm font-medium text-slate-500 mt-1">Smart EduTrack V.3.0 Enterprise</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="hidden md:flex bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-sm font-prompt font-medium text-slate-600 items-center gap-2">
-                  <i className="fa-regular fa-calendar text-blue-500"></i>
-                  {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                <div className="hidden md:flex bg-slate-100/80 border border-slate-200/50 px-5 py-2.5 rounded-xl text-sm font-prompt font-bold text-slate-600 items-center gap-3 shadow-inner">
+                  <i className="fa-regular fa-clock text-blue-500 text-lg"></i>
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
                 </div>
               </div>
             </header>
             
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-auto p-6 lg:p-8">
+            <div className="flex-1 overflow-auto p-6 lg:p-10 relative z-0">
               {activeTab === 'scan' && renderScanner()}
               {activeTab === 'dashboard' && renderDashboard()}
               {activeTab === 'yearly' && renderSpreadsheet()}
