@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คชื่อนักเรียน</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Sarabun', sans-serif; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    .zoom-in { animation: zoomIn 0.2s ease-out forwards; }
+    .slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const Icon = ({ name, size = 16, className = '' }) => {
+      const iconMap = {
+        ScanLine: 'fa-solid fa-barcode',
+        CheckCircle2: 'fa-solid fa-circle-check',
+        XCircle: 'fa-solid fa-circle-xmark',
+        Users: 'fa-solid fa-users',
+        UserCheck: 'fa-solid fa-user-check',
+        Clock: 'fa-solid fa-clock',
+        AlertCircle: 'fa-solid fa-circle-exclamation',
+        Keyboard: 'fa-solid fa-keyboard',
+        LayoutDashboard: 'fa-solid fa-chart-pie',
+        Settings: 'fa-solid fa-database',
+        Filter: 'fa-solid fa-filter',
+        UploadCloud: 'fa-solid fa-cloud-arrow-up',
+        Printer: 'fa-solid fa-print',
+        CalendarDays: 'fa-solid fa-calendar-days',
+        Bot: 'fa-solid fa-robot',
+        Play: 'fa-solid fa-play',
+        Square: 'fa-solid fa-square',
+        Check: 'fa-solid fa-check',
+        UserX: 'fa-solid fa-user-xmark',
+        UserPlus: 'fa-solid fa-user-plus',
+        ImageIcon: 'fa-solid fa-image',
+        Save: 'fa-solid fa-floppy-disk',
+        Camera: 'fa-solid fa-camera',
+        Info: 'fa-solid fa-circle-info'
+      };
+      return <i className={`${iconMap[name] || 'fa-solid fa-question'} ${className}`} style={{ fontSize: `${size}px` }}></i>;
+    };
+
+    const playBeep = (type) => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.15);
+        } else {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, ctx.currentTime);
+          gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+        }
+      } catch (err) {
+        console.error("Audio not supported");
+      }
+    };
+
+    const initialStudents = {
+      "1001": { id: "1001", name: "เด็กชายสมชาย มุ่งมั่น", class: "ม.1/1", number: 1, attendanceRate: 95, photo: null },
+      "1002": { id: "1002", name: "เด็กหญิงสมหญิง รักเรียน", class: "ม.1/1", number: 2, attendanceRate: 88, photo: null },
+      "1003": { id: "1003", name: "เด็กชายปิติ ใฝ่รู้", class: "ม.1/2", number: 1, attendanceRate: 75, photo: null },
+      "1004": { id: "1004", name: "เด็กหญิงมานี ใจดี", class: "ม.1/2", number: 2, attendanceRate: 100, photo: null },
+      "1005": { id: "1005", name: "เด็กชายวีระ กล้าหาญ", class: "ม.2/1", number: 1, attendanceRate: 82, photo: null },
+      "1006": { id: "1006", name: "เด็กหญิงชูใจ สดใส", class: "ม.2/1", number: 2, attendanceRate: 90, photo: null },
+      "1007": { id: "1007", name: "เด็กชายเพชร แข็งแกร่ง", class: "ม.3/1", number: 1, attendanceRate: 98, photo: null },
+    };
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('scan'); 
+      const [studentsDB, setStudentsDB] = useState(initialStudents);
+      const [logs, setLogs] = useState([]);
+      const [lastScan, setLastScan] = useState(null);
+      const [isFocused, setIsFocused] = useState(false);
+      const [barcode, setBarcode] = useState('');
+      const [importText, setImportText] = useState('');
+      const [filterClass, setFilterClass] = useState('all');
+      const [toast, setToast] = useState(null);
+
+      const inputRef = useRef(null);
+      const [scanFlash, setScanFlash] = useState(null); 
+      const [isAutoScanning, setIsAutoScanning] = useState(false); 
+      const [addForm, setAddForm] = useState({ id: '', name: '', class: '', number: '', photo: null });
+
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+      };
+
+      useEffect(() => {
+        let focusInterval;
+        if (activeTab === 'scan') {
+          focusInterval = setInterval(() => {
+            if (document.activeElement !== inputRef.current && inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 500); 
+        }
+        return () => clearInterval(focusInterval);
+      }, [activeTab]);
+
+      const totalStudents = Object.keys(studentsDB).length;
+      const presentLogs = logs.filter(l => l.status === 'success' || l.status === 'leave');
+      const uniquePresentIds = new Set(presentLogs.map(l => l.student?.id));
+      const presentCount = uniquePresentIds.size;
+      const leaveCount = new Set(logs.filter(l => l.status === 'leave').map(l => l.student?.id)).size;
+      const absentCount = totalStudents - presentCount;
+      const allClasses = [...new Set(Object.values(studentsDB).map(s => s.class))].sort();
+
+      const enforceFocus = () => {
+        if (activeTab === 'scan' && inputRef.current) inputRef.current.focus();
+      };
+
+      const handleProcessBarcode = (code, manualStatus = null) => {
+        const cleanCode = code.trim();
+        if (!cleanCode) return;
+
+        const student = studentsDB[cleanCode];
+        const timestamp = new Date();
+        const timeString = timestamp.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (!manualStatus) {
+          const recentScan = logs.find(
+            log => log.student?.id === cleanCode && 
+            (timestamp - log.rawTime) < 60000 && 
+            (log.status === 'success')
+          );
+
+          if (recentScan) {
+            playBeep('error');
+            setScanFlash('warning');
+            setLastScan({ id: Math.random(), status: 'warning', message: 'สแกนซ้ำ! (เพิ่งสแกนไปเมื่อสักครู่)', student: student, time: timeString });
+            setTimeout(() => setScanFlash(null), 300);
+            return;
+          }
+        }
+
+        if (student) {
+          let logStatus = manualStatus || 'success';
+          let logMessage = logStatus === 'success' ? 'มาเรียน' : logStatus === 'leave' ? 'ลา' : 'ขาดเรียน';
+
+          playBeep('success');
+          setScanFlash('success');
+
+          const filteredLogs = manualStatus ? logs.filter(l => l.student?.id !== student.id) : logs;
+          const newLog = { id: Math.random().toString(36).substr(2, 9), rawTime: timestamp, time: manualStatus ? 'บันทึกมือ' : timeString, student: student, status: logStatus };
+          
+          setLogs([newLog, ...filteredLogs]);
+          setLastScan({ id: Math.random(), status: logStatus, message: logMessage, student: student, time: timeString });
+        } else {
+          playBeep('error');
+          setScanFlash('error');
+          setLogs(prev => [{ id: Math.random().toString(36).substr(2, 9), rawTime: timestamp, time: timeString, codeScanned: cleanCode, status: 'error' }, ...prev]);
+          setLastScan({ id: Math.random(), status: 'error', message: 'ไม่พบข้อมูลในระบบ', codeScanned: cleanCode, time: timeString });
+        }
+        setTimeout(() => setScanFlash(null), 300);
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleProcessBarcode(barcode);
+          setBarcode('');
+        }
+      };
+
+      useEffect(() => {
+        let interval;
+        if (isAutoScanning) {
+          interval = setInterval(() => {
+            const unscannedIds = Object.keys(studentsDB).filter(id => !logs.some(l => l.student?.id === id && (l.status === 'success' || l.status === 'leave')));
+            if (unscannedIds.length > 0) {
+              handleProcessBarcode(unscannedIds[Math.floor(Math.random() * unscannedIds.length)]);
+            } else {
+              setIsAutoScanning(false);
+              showToast('จำลองการสแกนเสร็จสิ้น (ครบทุกคนแล้ว)', 'success');
+            }
+          }, 2500); 
+        }
+        return () => clearInterval(interval);
+      }, [isAutoScanning, studentsDB, logs]);
+
+      const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          setAddForm(prev => ({ ...prev, photo: url }));
+        }
+      };
+
+      const handleAddSingleStudent = (e) => {
+        e.preventDefault();
+        if (!addForm.id || !addForm.name) {
+          showToast('กรุณากรอกรหัสและชื่อนักเรียนให้ครบถ้วน', 'error');
+          return;
+        }
+        setStudentsDB(prev => ({
+          ...prev,
+          [addForm.id]: {
+            id: addForm.id,
+            name: addForm.name,
+            class: addForm.class || '-',
+            number: parseInt(addForm.number) || 0,
+            attendanceRate: 100,
+            photo: addForm.photo
+          }
+        }));
+        showToast(`เพิ่มข้อมูล ${addForm.name} สำเร็จ`, 'success');
+        setAddForm({ id: '', name: '', class: '', number: '', photo: null });
+      };
+
+      const processImportData = (text) => {
+        const lines = text.split('\n');
+        let importedCount = 0;
+        const newDB = { ...studentsDB };
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const parts = line.split(',');
+          if (parts.length >= 4) {
+            const id = parts[0]?.trim();
+            const name = parts[1]?.trim();
+            const className = parts[2]?.trim();
+            const number = parseInt(parts[3]?.trim(), 10) || 0;
+            if (id && name) {
+              if(id === 'รหัสนักเรียน' || id === 'รหัส') continue; // ข้าม Header
+              newDB[id] = { id, name, class: className, number, attendanceRate: 100, photo: null };
+              importedCount++;
+            }
+          }
+        }
+        if (importedCount > 0) {
+          setStudentsDB(newDB);
+          setImportText('');
+          showToast(`นำเข้าข้อมูลสำเร็จ ${importedCount} รายการ`, 'success');
+        } else {
+          showToast('ไม่พบข้อมูลที่ถูกต้อง หรือรูปแบบไม่ตรง', 'error');
+        }
+      };
+
+      const handleCellEdit = (id, field, value) => {
+        setStudentsDB(prev => ({
+          ...prev,
+          [id]: {
+            ...prev[id],
+            [field]: field === 'number' || field === 'attendanceRate' ? (parseInt(value) || 0) : value
+          }
+        }));
+      };
+
+      const renderScanner = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative" onClick={enforceFocus}>
+          {scanFlash && (
+            <div className={`fixed inset-0 z-40 pointer-events-none transition-opacity duration-100 opacity-20 ${
+              scanFlash === 'success' ? 'bg-green-500' : scanFlash === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+            }`} />
+          )}
+
+          {/* ซ้าย: เครื่องสแกน */}
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <div className={`bg-white rounded-xl shadow-md overflow-hidden border-2 transition-colors duration-300 ${isFocused ? 'border-green-400' : 'border-red-400'}`}>
+              <div className={`p-4 text-center text-white font-bold text-lg transition-colors ${isFocused ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}>
+                {isFocused ? '🟢 พร้อมรับการสแกนอัตโนมัติ' : '🔴 หลุดโฟกัส! กำลังดึงกลับ...'}
+              </div>
+              <div className="p-6 flex flex-col items-center bg-gray-50">
+                <div className="relative w-full max-w-xs">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Icon name="ScanLine" size={20} className="text-gray-400" />
+                  </div>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => { setIsFocused(false); setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 10); }}
+                    placeholder="สแกนรหัสที่นี่..."
+                    className="block w-full pl-12 pr-4 py-5 border-2 border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 text-2xl text-center shadow-inner bg-white font-bold"
+                    autoComplete="off"
+                    autoFocus
+                  />
+                </div>
+                <p className="text-sm text-gray-500 mt-4 text-center bg-gray-200 px-3 py-1 rounded-full">
+                  ระบบบันทึกเวลาปัจจุบันอัตโนมัติ
+                </p>
+              </div>
+            </div>
+
+            {/* ผลล่าสุด */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col min-h-[340px]">
+              <div className="p-4 border-b bg-gray-50 rounded-t-xl">
+                <h2 className="font-semibold text-gray-700 flex items-center gap-2"><Icon name="UserCheck" size={18} /> ข้อมูลการสแกนล่าสุด</h2>
+              </div>
+              <div className="p-6 flex-1 flex flex-col items-center justify-center text-center">
+                {!lastScan ? (
+                  <div className="text-gray-400"><Icon name="ScanLine" size={80} className="mx-auto mb-4 opacity-20" /><p>รอการสแกนคนแรก...</p></div>
+                ) : (
+                  <div key={lastScan.id} className="w-full zoom-in fade-in">
+                    {lastScan.status === 'success' && (
+                      <div className="bg-green-50 p-6 rounded-2xl border border-green-100 flex flex-col items-center shadow-sm">
+                        {lastScan.student.photo ? (
+                          <div className="w-32 h-32 rounded-xl overflow-hidden border-4 border-green-400 shadow-md mb-4 bg-white">
+                            <img src={lastScan.student.photo} alt={lastScan.student.name} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <Icon name="CheckCircle2" size={80} className="text-green-500 mb-4 mx-auto" />
+                        )}
+                        <h3 className="text-2xl font-bold text-green-800 mb-1">{lastScan.student.name}</h3>
+                        <p className="text-lg text-green-700 mb-3">{lastScan.student.class} | เลขที่ {lastScan.student.number}</p>
+                        <span className="px-5 py-2 bg-green-500 text-white rounded-full font-bold shadow-sm flex items-center gap-2">
+                          <Icon name="Clock" size={16} /> เข้าเรียน • {lastScan.time}
+                        </span>
+                      </div>
+                    )}
+                    {lastScan.status === 'warning' && (
+                      <div className="bg-yellow-50 p-6 rounded-2xl border border-yellow-100">
+                        <Icon name="AlertCircle" size={80} className="text-yellow-500 mb-4 mx-auto" />
+                        <h3 className="text-xl font-bold text-yellow-800 mb-2">{lastScan.message}</h3>
+                        <p className="text-lg text-yellow-700">{lastScan.student.name}</p>
+                      </div>
+                    )}
+                    {lastScan.status === 'error' && (
+                      <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
+                        <Icon name="XCircle" size={80} className="text-red-500 mb-4 mx-auto" />
+                        <h3 className="text-xl font-bold text-red-700 mb-2">{lastScan.message}</h3>
+                        <p className="font-mono mt-2 text-red-600 bg-white px-3 py-1 inline-block border border-red-200 rounded">รหัส: {lastScan.codeScanned}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Simulator Panel */}
+            <div className="bg-purple-50 rounded-xl shadow-sm border border-purple-200 p-4 mt-auto">
+              <button onClick={() => setIsAutoScanning(!isAutoScanning)} className={`w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm transition-all text-sm ${isAutoScanning ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse' : 'bg-purple-600 text-white hover:bg-purple-700'}`}>
+                {isAutoScanning ? <><Icon name="Square" size={16} /> หยุดจำลอง Auto Scan</> : <><Icon name="Play" size={16} /> เริ่มจำลอง Auto Scan (Bot)</>}
+              </button>
+            </div>
+          </div>
+
+          {/* ขวา: ประวัติการสแกน */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full">
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+              <h2 className="font-semibold text-gray-700 flex items-center gap-2"><Icon name="Clock" size={18} /> บันทึกการสแกนวันนี้</h2>
+              <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border shadow-sm">สแกนแล้ว {logs.length} ครั้ง</span>
+            </div>
+            <div className="flex-1 overflow-auto max-h-[700px]">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
+                  <tr>
+                    <th className="py-3 px-4 text-gray-500 font-semibold text-sm border-b">เวลา</th>
+                    <th className="py-3 px-4 text-gray-500 font-semibold text-sm border-b">รหัส</th>
+                    <th className="py-3 px-4 text-gray-500 font-semibold text-sm border-b">ชื่อ - นามสกุล</th>
+                    <th className="py-3 px-4 text-gray-500 font-semibold text-sm border-b text-center">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.length === 0 ? (
+                    <tr><td colSpan="4" className="text-center py-12 text-gray-400">ยังไม่มีประวัติในวันนี้</td></tr>
+                  ) : (
+                    logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50 border-b last:border-0 transition-colors">
+                        <td className="py-3 px-4 text-sm text-gray-600">{log.time}</td>
+                        <td className="py-3 px-4 font-mono text-sm">{log.status === 'error' ? log.codeScanned : log.student.id}</td>
+                        <td className="py-3 px-4 flex items-center gap-3">
+                          {log.status === 'error' ? <span className="text-red-500 italic">ไม่พบข้อมูล</span> : (
+                            <>
+                              {log.student.photo ? (
+                                <img src={log.student.photo} className="w-8 h-8 rounded-full object-cover border border-gray-200" alt="" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200"><Icon name="Users" size={14}/></div>
+                              )}
+                              <span className="font-medium text-gray-800">{log.student.name}</span>
+                            </>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {log.status === 'success' && <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">มาเรียน</span>}
+                          {log.status === 'leave' && <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">ลา</span>}
+                          {log.status === 'error' && <span className="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">ผิดพลาด</span>}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderDashboard = () => {
+        const studentList = Object.values(studentsDB).filter(s => filterClass === 'all' || s.class === filterClass);
+        return (
+          <div className="flex flex-col gap-6 fade-in">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+              <div className="flex items-center gap-2"><Icon name="LayoutDashboard" size={24} className="text-blue-600" /><h2 className="text-xl font-bold">รายงานสถานะรายวัน</h2></div>
+              <div className="flex gap-3">
+                <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition"><Icon name="Printer" size={18} /> พิมพ์รายงาน</button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-xl border border-gray-100 flex flex-col"><span className="text-gray-500 text-sm font-medium">นักเรียนทั้งหมด</span><span className="text-3xl font-bold mt-2 text-gray-800">{studentList.length}</span></div>
+              <div className="bg-green-50 p-5 rounded-xl border border-green-100 flex flex-col"><span className="text-green-700 text-sm font-medium">มาเรียน</span><span className="text-3xl font-bold text-green-600 mt-2">{studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status === 'success')).length}</span></div>
+              <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 flex flex-col"><span className="text-blue-700 text-sm font-medium">ลา</span><span className="text-3xl font-bold text-blue-600 mt-2">{studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status === 'leave')).length}</span></div>
+              <div className="bg-red-50 p-5 rounded-xl border border-red-100 flex flex-col"><span className="text-red-700 text-sm font-medium">ขาดเรียน</span><span className="text-3xl font-bold text-red-600 mt-2">{studentList.length - studentList.filter(s => logs.find(l => l.student?.id === s.id && l.status !== 'error')).length}</span></div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                <h2 className="font-semibold text-gray-700 flex items-center gap-2"><Icon name="Users" size={18} /> จัดการสถานะและเช็คชื่อรายบุคคล</h2>
+                <div className="flex gap-2 text-sm items-center"><Icon name="Filter" size={16} className="text-gray-500" /> <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"><option value="all">ทุกชั้นเรียน</option>{allClasses.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+              </div>
+              <div className="overflow-x-auto max-h-[500px]">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
+                    <tr>
+                      <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">รูป/รหัส</th>
+                      <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">ชื่อ - นามสกุล</th>
+                      <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">ชั้น (เลขที่)</th>
+                      <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">สถานะวันนี้</th>
+                      <th className="py-3 px-4 text-sm font-semibold text-gray-600 text-center border-b">ปรับสถานะด้วยมือ (Manual)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {studentList.map(student => {
+                      const log = logs.find(l => l.student?.id === student.id && l.status !== 'error');
+                      let badge = <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">ขาด</span>;
+                      if (log) {
+                        if (log.status === 'success') badge = <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">มาเรียน ({log.time})</span>;
+                        if (log.status === 'leave') badge = <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">ลา ({log.time})</span>;
+                      }
+                      return (
+                        <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-4 flex items-center gap-3">
+                            {student.photo ? (
+                               <img src={student.photo} className="w-10 h-10 rounded-lg object-cover border border-gray-200 shadow-sm" alt="profile"/>
+                            ) : (
+                               <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200"><Icon name="Users" size={16}/></div>
+                            )}
+                            <span className="font-mono text-sm text-gray-500">{student.id}</span>
+                          </td>
+                          <td className="py-3 px-4 text-sm font-medium text-gray-800">{student.name}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">{student.class} ({student.number})</td>
+                          <td className="py-3 px-4">{badge}</td>
+                          <td className="py-3 px-4 text-center flex justify-center gap-2">
+                            <button onClick={() => handleProcessBarcode(student.id, 'success')} className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-md border border-green-200 text-xs font-medium flex items-center gap-1 transition-colors"><Icon name="Check" size={14}/> มา</button>
+                            <button onClick={() => handleProcessBarcode(student.id, 'leave')} className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md border border-blue-200 text-xs font-medium flex items-center gap-1 transition-colors"><Icon name="CalendarDays" size={14}/> ลา</button>
+                            <button onClick={() => setLogs(logs.filter(l => l.student?.id !== student.id))} className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-md border border-red-200 text-xs font-medium flex items-center gap-1 transition-colors"><Icon name="UserX" size={14}/> ขาด</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const renderSpreadsheet = () => {
+        const studentList = Object.values(studentsDB).filter(s => filterClass === 'all' || s.class === filterClass);
+        return (
+          <div className="flex flex-col gap-6 fade-in h-full">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-150px)]">
+              <div className="p-4 border-b bg-emerald-700 text-white flex justify-between items-center rounded-t-xl">
+                <div>
+                  <h2 className="font-semibold flex items-center gap-2 text-lg"><Icon name="LayoutDashboard" size={20} /> ข้อมูลสรุปรายปี (Spreadsheet Mode)</h2>
+                  <p className="text-xs text-emerald-100 mt-1 flex items-center gap-1"><Icon name="Info" size={14} /> พิมพ์แก้ไขข้อมูลในตารางได้ทันที (Auto-Save)</p>
+                </div>
+                <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-emerald-800 border border-emerald-600 rounded-lg px-3 py-2 text-sm text-white outline-none cursor-pointer hover:bg-emerald-600 transition-colors">
+                  <option value="all">ทั้งหมด ทุกชั้น</option>
+                  {allClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="flex-1 overflow-auto bg-gray-100 p-4">
+                <div className="bg-white shadow-sm border border-gray-300 rounded-lg overflow-hidden">
+                  <table className="w-full text-left border-collapse table-fixed">
+                    <thead className="bg-gray-200 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="w-16 border-r border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 text-center uppercase">#</th>
+                        <th className="w-32 border-r border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 uppercase">รหัสนักเรียน</th>
+                        <th className="border-r border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 uppercase">ชื่อ - นามสกุล</th>
+                        <th className="w-32 border-r border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 uppercase">ชั้นเรียน</th>
+                        <th className="w-24 border-r border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 text-center uppercase">เลขที่</th>
+                        <th className="w-40 border-b border-gray-300 py-3 px-3 text-xs font-bold text-gray-700 text-center uppercase">ร้อยละเข้าเรียน</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {studentList.map((student, index) => {
+                        const rate = student.attendanceRate;
+                        const isCritical = rate < 80;
+                        return (
+                          <tr key={student.id} className={`hover:bg-blue-50 focus-within:bg-blue-50 transition-colors ${isCritical ? 'bg-red-50' : ''}`}>
+                            <td className="border-r border-b border-gray-200 py-1 px-3 text-sm text-center text-gray-500 bg-gray-50">{index + 1}</td>
+                            <td className="border-r border-b border-gray-200 py-1 px-3 text-sm font-mono text-gray-500 bg-gray-50">{student.id}</td>
+                            <td className="border-r border-b border-gray-200 p-0">
+                              <input 
+                                type="text" value={student.name} onChange={(e) => handleCellEdit(student.id, 'name', e.target.value)} 
+                                className={`w-full h-full py-3 px-4 text-sm font-medium border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent ${isCritical ? 'text-red-700' : 'text-gray-800'}`}
+                              />
+                            </td>
+                            <td className="border-r border-b border-gray-200 p-0">
+                              <input 
+                                type="text" value={student.class} onChange={(e) => handleCellEdit(student.id, 'class', e.target.value)} 
+                                className="w-full h-full py-3 px-4 text-sm border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent"
+                              />
+                            </td>
+                            <td className="border-r border-b border-gray-200 p-0">
+                              <input 
+                                type="number" value={student.number} onChange={(e) => handleCellEdit(student.id, 'number', e.target.value)} 
+                                className="w-full h-full py-3 px-4 text-sm text-center border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent"
+                              />
+                            </td>
+                            <td className="border-b border-gray-200 p-0 relative bg-white bg-opacity-50">
+                               <input 
+                                type="number" value={student.attendanceRate} onChange={(e) => handleCellEdit(student.id, 'attendanceRate', e.target.value)} 
+                                className={`w-full h-full py-3 pl-4 pr-10 text-sm text-right font-bold border-none outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 bg-transparent ${isCritical ? 'text-red-600' : 'text-emerald-600'}`}
+                              />
+                              <span className="absolute right-4 top-3 text-sm text-gray-400 pointer-events-none font-bold">%</span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const renderImport = () => (
+        <div className="flex flex-col gap-6 fade-in max-w-6xl mx-auto w-full pb-10">
+          {/* ฟอร์มเพิ่มนักเรียนมีรูป */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-5 border-b bg-gray-50 flex items-center gap-2">
+              <Icon name="UserPlus" className="text-blue-600" size={20} />
+              <h2 className="text-lg font-bold text-gray-800">เพิ่มนักเรียนใหม่ (รายบุคคล)</h2>
+            </div>
+            <form onSubmit={handleAddSingleStudent} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="col-span-1 flex flex-col items-center gap-3">
+                  <div className="relative w-32 h-40 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 flex flex-col items-center justify-center overflow-hidden hover:bg-gray-100 transition group cursor-pointer shadow-sm">
+                    {addForm.photo ? (
+                      <img src={addForm.photo} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <Icon name="ImageIcon" size={32} className="text-gray-400 mb-2 group-hover:scale-110 transition" />
+                        <span className="text-xs text-gray-500 font-medium">รูปประจำตัว</span>
+                      </>
+                    )}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Icon name="Camera" className="text-white" size={24} />
+                    </div>
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  </div>
+                  <p className="text-xs text-gray-400 text-center">คลิกเพื่ออัปโหลดรูป</p>
+                </div>
+                <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">รหัสนักเรียน <span className="text-red-500">*</span></label>
+                    <input type="text" required value={addForm.id} onChange={e => setAddForm({...addForm, id: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition-colors" placeholder="เช่น 1008" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">ชื่อ - นามสกุล <span className="text-red-500">*</span></label>
+                    <input type="text" required value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition-colors" placeholder="เช่น เด็กชายมานะ ขยัน" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">ชั้นเรียน / ห้อง</label>
+                    <input type="text" value={addForm.class} onChange={e => setAddForm({...addForm, class: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition-colors" placeholder="เช่น ม.1/1" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">เลขที่</label>
+                    <input type="number" value={addForm.number} onChange={e => setAddForm({...addForm, number: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition-colors" placeholder="เช่น 1" />
+                  </div>
+                  <div className="sm:col-span-2 mt-4 flex justify-end">
+                    <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2">
+                      <Icon name="Save" size={18} /> บันทึกข้อมูล
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* นำเข้าชุดข้อมูล */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><Icon name="UploadCloud" className="text-blue-600" size={20} /> นำเข้าข้อมูลจำนวนมาก (Excel/CSV)</h2>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-4">
+                <h3 className="font-semibold text-gray-700 text-sm border-b pb-2">รูปแบบข้อมูล</h3>
+                <p className="text-sm text-gray-600 mb-2">ก๊อปปี้ข้อมูลจาก Excel แล้ววางในช่องว่าง (ไม่ต้องมีหัวข้อคอลัมน์)</p>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 font-mono text-sm text-blue-800 leading-relaxed shadow-inner">
+                  รหัสนักเรียน, ชื่อ-นามสกุล, ชั้น/ห้อง, เลขที่<br/>
+                  1008, เด็กชายธนา รุ่งเรือง, ม.3/1, 2<br/>
+                  1009, เด็กหญิงพิม สวยงาม, ม.3/2, 1
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <textarea 
+                  className="w-full h-40 border border-gray-300 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none shadow-inner bg-gray-50 focus:bg-white transition-colors"
+                  placeholder="วางข้อมูลที่นี่..."
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                ></textarea>
+                <button 
+                  onClick={() => processImportData(importText)}
+                  className="px-6 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors font-medium text-sm self-end shadow-sm"
+                >ประมวลผลข้อมูล</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row font-sans relative overflow-hidden">
+          
+          {/* Toast Alert */}
+          {toast && (
+            <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 slide-in-right ${
+              toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`}>
+              <Icon name={toast.type === 'success' ? "CheckCircle2" : "AlertCircle"} size={20} />
+              {toast.message}
+            </div>
+          )}
+
+          {/* Sidebar */}
+          <aside className="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-20 shrink-0">
+            <div className="p-6 border-b border-slate-800 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg"><Icon name="ScanLine" size={28} /></div>
+              <h1 className="text-white font-extrabold text-xl leading-tight tracking-wide">School<br/>Attendance</h1>
+            </div>
+            <nav className="flex-1 p-4 flex flex-col gap-2">
+              <button onClick={() => setActiveTab('scan')} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${activeTab === 'scan' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}><Icon name="ScanLine" size={20} /> สแกนบาร์โค้ด</button>
+              <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}><Icon name="LayoutDashboard" size={20} /> รายงานรายวัน</button>
+              <button onClick={() => setActiveTab('yearly')} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${activeTab === 'yearly' ? 'bg-emerald-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}><Icon name="CalendarDays" size={20} /> ตารางสรุป (ชีท)</button>
+              <button onClick={() => setActiveTab('import')} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${activeTab === 'import' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}><Icon name="Settings" size={20} /> ฐานข้อมูลนักเรียน</button>
+            </nav>
+          </aside>
+          
+          {/* Main Area */}
+          <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+            <header className="bg-white px-8 py-5 shadow-sm border-b border-gray-200 flex justify-between items-center z-10 shrink-0">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {activeTab === 'scan' && 'ระบบสแกนเช็คชื่ออัตโนมัติ'}
+                {activeTab === 'dashboard' && 'ระบบรายงานผลรายวัน'}
+                {activeTab === 'yearly' && 'ตารางสรุปการเข้าเรียนประจำปี'}
+                {activeTab === 'import' && 'จัดการฐานข้อมูลนักเรียน'}
+              </h2>
+              <div className="text-sm font-medium text-gray-500 flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full"><Icon name="Clock" size={16} /> {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </header>
+            <div className="p-6 md:p-8 flex-1 overflow-auto bg-slate-50">
+              {activeTab === 'scan' && renderScanner()}
+              {activeTab === 'dashboard' && renderDashboard()}
+              {activeTab === 'yearly' && renderSpreadsheet()}
+              {activeTab === 'import' && renderImport()}
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
