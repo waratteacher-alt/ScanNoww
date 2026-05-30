@@ -143,6 +143,11 @@
       const [isAutoScanning, setIsAutoScanning] = useState(false); 
       const [addForm, setAddForm] = useState({ id: '', name: '', class: '', number: '', photo: null });
 
+      const today = new Date();
+      const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+      const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+      const [attendanceData, setAttendanceData] = useState({});
+
       const inputRef = useRef(null);
 
       // ฟังก์ชัน Toast ที่ดูทันสมัย
@@ -205,6 +210,15 @@
           setLogs([newLog, ...filteredLogs]);
           setLastScan({ id: Math.random(), status: logStatus, message: logMessage, student: student, time: timeString });
           
+          const dateKey = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
+          setAttendanceData(prev => ({
+            ...prev,
+            [student.id]: {
+              ...(prev[student.id] || {}),
+              [dateKey]: logStatus
+            }
+          }));
+
           if(!manualStatus) showToast(`บันทึก ${student.name} สำเร็จ`, 'success');
         } else {
           playBeep('error');
@@ -304,6 +318,52 @@
             [field]: field === 'number' || field === 'attendanceRate' ? (parseInt(value) || 0) : value
           }
         }));
+      };
+
+      const handleDownloadTemplate = () => {
+        const headers = "รหัสประจำตัว,ชื่อ-นามสกุล,ระดับชั้น,เลขที่\n";
+        const sample = "1001,เด็กชายสมชาย มุ่งมั่น,ม.1/1,1\n1002,เด็กหญิงสมหญิง รักเรียน,ม.1/1,2";
+        const blob = new Blob(["\uFEFF" + headers + sample], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "student_template.csv";
+        link.click();
+      };
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target.result;
+          const lines = text.split('\n');
+          // ถ้ามีบรรทัดหัวข้อ (Header) ให้ตัดทิ้ง
+          if (lines.length > 0 && (lines[0].includes('รหัส') || lines[0].includes('id'))) {
+             lines.shift();
+          }
+          processImportData(lines.join('\n'));
+        };
+        reader.readAsText(file);
+        e.target.value = ''; 
+      };
+
+      const handleAttendanceCellToggle = (studentId, dateKey) => {
+        setAttendanceData(prev => {
+          const currentStatus = prev[studentId]?.[dateKey];
+          let nextStatus = '';
+          if (!currentStatus) nextStatus = 'success';
+          else if (currentStatus === 'success') nextStatus = 'leave';
+          else if (currentStatus === 'leave') nextStatus = 'error'; // ใช้ error แทน ขาดเรียน
+          else nextStatus = ''; 
+
+          return {
+            ...prev,
+            [studentId]: {
+              ...(prev[studentId] || {}),
+              [dateKey]: nextStatus
+            }
+          };
+        });
       };
 
       const renderScanner = () => (
@@ -561,59 +621,98 @@
 
       const renderSpreadsheet = () => {
         const studentList = Object.values(studentsDB).filter(s => filterClass === 'all' || s.class === filterClass);
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+        const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        
         return (
           <div className="flex flex-col h-[calc(100vh-120px)] animate-fade-in">
             <div className="premium-card flex flex-col h-full overflow-hidden">
-              <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center relative z-20 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+              <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap justify-between items-center relative z-20 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] gap-4">
                 <div>
-                  <h2 className="font-prompt font-bold text-lg text-slate-800"><i className="fa-solid fa-table-cells text-emerald-600 mr-2"></i> ฐานข้อมูลและสถิติภาพรวม (Spreadsheet)</h2>
-                  <p className="text-xs text-slate-500 mt-1">สามารถคลิกที่ช่องตารางเพื่อทำการแก้ไขข้อมูลได้โดยตรง ระบบจะบันทึกอัตโนมัติ</p>
+                  <h2 className="font-prompt font-bold text-lg text-slate-800"><i className="fa-regular fa-calendar-days text-blue-600 mr-2"></i> สถิติการเข้าเรียนรายเดือน (Daily Tracker)</h2>
+                  <p className="text-xs text-slate-500 mt-1">คลิกที่ช่องวันที่เพื่อเปลี่ยนสถานะ (ว่าง &rarr; มา &rarr; ลา &rarr; ขาด)</p>
                 </div>
-                <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-2 text-sm font-prompt outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="all">แสดงทั้งหมด</option>
-                  {allClasses.map(c => <option key={c} value={c}>ห้อง {c}</option>)}
-                </select>
+                
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                    <button onClick={() => {
+                        if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
+                        else { setSelectedMonth(m => m - 1); }
+                    }} className="px-3 py-2 hover:bg-slate-200 transition"><i className="fa-solid fa-chevron-left text-sm text-slate-600"></i></button>
+                    <div className="px-4 py-2 font-prompt text-sm font-semibold text-slate-700 border-l border-r border-slate-200 min-w-[140px] text-center">
+                      {monthNames[selectedMonth]} {selectedYear + 543}
+                    </div>
+                    <button onClick={() => {
+                        if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
+                        else { setSelectedMonth(m => m + 1); }
+                    }} className="px-3 py-2 hover:bg-slate-200 transition"><i className="fa-solid fa-chevron-right text-sm text-slate-600"></i></button>
+                  </div>
+                  
+                  <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-4 py-2 text-sm font-prompt outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all">แสดงทั้งหมด</option>
+                    {allClasses.map(c => <option key={c} value={c}>ห้อง {c}</option>)}
+                  </select>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-auto bg-slate-50 p-6">
-                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-                  <table className="w-full text-left border-collapse table-fixed">
-                    <thead className="bg-slate-100 sticky top-0 z-10 shadow-[0_1px_0_#e2e8f0]">
-                      <tr>
-                        <th className="w-16 border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase">ลำดับ</th>
-                        <th className="w-32 border-r border-slate-200 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 uppercase">รหัส ปจต.</th>
-                        <th className="border-r border-slate-200 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 uppercase">ชื่อ - นามสกุล</th>
-                        <th className="w-32 border-r border-slate-200 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 uppercase">สังกัดชั้น</th>
-                        <th className="w-24 border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase">เลขที่</th>
-                        <th className="w-40 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 text-center uppercase">ร้อยละเวลาเรียน</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {studentList.map((student, index) => {
-                        const rate = student.attendanceRate;
-                        const isCritical = rate < 80;
-                        return (
-                          <tr key={student.id} className={`transition-colors focus-within:bg-blue-50 hover:bg-slate-50 border-b border-slate-100 ${isCritical ? 'bg-rose-50/30' : ''}`}>
-                            <td className="border-r border-slate-100 py-2 px-3 text-sm text-center text-slate-400 bg-slate-50/50">{index + 1}</td>
-                            <td className="border-r border-slate-100 py-2 px-4 text-sm font-mono text-slate-500 bg-slate-50/50">{student.id}</td>
-                            <td className="border-r border-slate-100 p-0">
-                              <input type="text" value={student.name} onChange={(e) => handleCellEdit(student.id, 'name', e.target.value)} className={`w-full h-full py-3 px-4 text-sm font-medium border-none outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 bg-transparent ${isCritical ? 'text-rose-700' : 'text-slate-700'}`} />
-                            </td>
-                            <td className="border-r border-slate-100 p-0">
-                              <input type="text" value={student.class} onChange={(e) => handleCellEdit(student.id, 'class', e.target.value)} className="w-full h-full py-3 px-4 text-sm border-none outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 bg-transparent text-slate-600" />
-                            </td>
-                            <td className="border-r border-slate-100 p-0">
-                              <input type="number" value={student.number} onChange={(e) => handleCellEdit(student.id, 'number', e.target.value)} className="w-full h-full py-3 px-3 text-sm text-center border-none outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 bg-transparent text-slate-600" />
-                            </td>
-                            <td className="p-0 relative">
-                               <input type="number" value={student.attendanceRate} onChange={(e) => handleCellEdit(student.id, 'attendanceRate', e.target.value)} className={`w-full h-full py-3 pl-4 pr-10 text-sm text-right font-prompt font-semibold border-none outline-none focus:ring-inset focus:ring-2 focus:ring-blue-500 bg-transparent ${isCritical ? 'text-rose-600' : 'text-emerald-600'}`} />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 pointer-events-none">%</span>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+              <div className="flex-1 overflow-auto bg-slate-50 p-6 relative">
+                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden relative">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-max">
+                      <thead className="bg-slate-100 sticky top-0 z-20 shadow-[0_1px_0_#e2e8f0]">
+                        <tr>
+                          <th className="sticky left-0 bg-slate-100 z-30 w-16 border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase shadow-[1px_0_0_#e2e8f0]">เลขที่</th>
+                          <th className="sticky left-[64px] bg-slate-100 z-30 w-56 border-r border-slate-200 py-3 px-4 text-xs font-prompt font-semibold text-slate-500 uppercase shadow-[1px_0_0_#e2e8f0]">ชื่อ - นามสกุล</th>
+                          <th className="border-r border-slate-200 py-3 px-3 text-xs font-prompt font-semibold text-slate-500 text-center uppercase">ชั้น</th>
+                          {daysArray.map(day => (
+                            <th key={day} className="w-10 border-r border-slate-200 py-3 px-1 text-xs font-prompt font-semibold text-slate-500 text-center">{day}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {studentList.map((student) => {
+                          return (
+                            <tr key={student.id} className="transition-colors hover:bg-blue-50/50 border-b border-slate-100 group">
+                              <td className="sticky left-0 bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 py-2 px-3 text-sm text-center text-slate-500 shadow-[1px_0_0_#f1f5f9]">{student.number}</td>
+                              <td className="sticky left-[64px] bg-white group-hover:bg-blue-50 z-10 border-r border-slate-100 py-2 px-4 text-sm font-medium text-slate-700 shadow-[1px_0_0_#f1f5f9] truncate max-w-[224px]">{student.name}</td>
+                              <td className="border-r border-slate-100 py-2 px-3 text-sm text-center text-slate-500">{student.class}</td>
+                              {daysArray.map(day => {
+                                const dateKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                const status = attendanceData[student.id]?.[dateKey];
+                                
+                                let cellContent = null;
+                                let cellClass = "cursor-pointer hover:bg-slate-100 transition-colors text-center p-0";
+                                
+                                if (status === 'success') {
+                                  cellContent = <i className="fa-solid fa-check text-emerald-500"></i>;
+                                  cellClass += " bg-emerald-50/30";
+                                } else if (status === 'leave') {
+                                  cellContent = <span className="text-xs font-bold text-sky-500">ล</span>;
+                                  cellClass += " bg-sky-50/30";
+                                } else if (status === 'error') {
+                                  cellContent = <i className="fa-solid fa-xmark text-rose-500"></i>;
+                                  cellClass += " bg-rose-50/30";
+                                }
+
+                                return (
+                                  <td 
+                                    key={day} 
+                                    className={`border-r border-slate-100 w-10 h-10 ${cellClass}`}
+                                    onClick={() => handleAttendanceCellToggle(student.id, dateKey)}
+                                  >
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      {cellContent}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -671,39 +770,40 @@
           </div>
 
           <div className="premium-card overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-wrap gap-4">
               <h2 className="text-xl font-prompt font-bold text-slate-800"><i className="fa-solid fa-file-import text-blue-600 mr-2"></i> นำเข้าฐานข้อมูลจำนวนมาก (Batch Import)</h2>
+              <button onClick={handleDownloadTemplate} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors font-prompt font-medium text-sm flex items-center gap-2 shadow-sm">
+                <i className="fa-solid fa-download"></i> โหลดไฟล์ Template (CSV)
+              </button>
             </div>
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div>
-                <p className="text-slate-600 text-sm leading-relaxed mb-4">ระบบรองรับการนำเข้าข้อมูลโดยการคัดลอก (Copy) ข้อมูลจากไฟล์ Spreadsheet (Excel/Google Sheets) มาวางลงในช่องว่างด้านขวา</p>
-                <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                  <h4 className="font-prompt font-semibold text-slate-700 text-sm mb-3">รูปแบบข้อมูลที่รองรับ (ลำดับคอลัมน์)</h4>
-                  <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
-                    <li>รหัสประจำตัว</li>
-                    <li>ชื่อ-นามสกุล</li>
-                    <li>ระดับชั้น (เช่น ม.1/1)</li>
-                    <li>เลขที่ (ตัวเลขเท่านั้น)</li>
-                  </ul>
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">ตัวอย่างข้อมูลดิบ (CSV Format):</span>
-                    <code className="text-xs font-mono text-blue-600 block bg-blue-50 p-3 rounded-lg border border-blue-100">
-                      1008, ด.ช.รักไทย ใจดี, ม.1/1, 3<br/>
-                      1009, ด.ญ.เรียนดี มีสุข, ม.1/1, 4
-                    </code>
+              <div className="flex flex-col gap-4">
+                <h3 className="font-prompt font-semibold text-slate-700 border-b border-slate-200 pb-2 flex items-center gap-2">
+                  <i className="fa-solid fa-upload text-blue-500"></i> วิธีที่ 1: อัปโหลดไฟล์เทมเพลต
+                </h3>
+                <div className="border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50 transition-colors group relative h-48 cursor-pointer">
+                  <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="คลิกเพื่อเลือกไฟล์ CSV" />
+                  <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm border border-blue-100">
+                    <i className="fa-solid fa-file-csv text-2xl"></i>
                   </div>
+                  <p className="font-prompt font-medium text-slate-800 mb-1">คลิกหรือลากไฟล์มาวางที่นี่</p>
+                  <p className="text-xs text-slate-500 font-prompt">รองรับไฟล์ .csv (บันทึกจาก Excel)</p>
                 </div>
               </div>
-              <div className="flex flex-col">
+
+              <div className="flex flex-col gap-4">
+                <h3 className="font-prompt font-semibold text-slate-700 border-b border-slate-200 pb-2 flex items-center gap-2">
+                  <i className="fa-solid fa-keyboard text-blue-500"></i> วิธีที่ 2: คัดลอกและวาง (Manual)
+                </h3>
                 <textarea 
-                  className="flex-1 w-full border border-slate-300 rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-slate-50 focus:bg-white transition-shadow min-h-[200px]"
+                  className="flex-1 w-full border border-slate-300 rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-slate-50 focus:bg-white transition-shadow h-48"
                   placeholder="วางข้อมูลที่คัดลอกมาลงที่นี่..."
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
                 ></textarea>
                 <button 
                   onClick={() => processImportData(importText)}
-                  className="mt-4 w-full py-3 bg-slate-800 text-white rounded-xl font-prompt font-medium hover:bg-slate-700 transition-colors shadow-sm"
+                  className="w-full py-3 bg-slate-800 text-white rounded-xl font-prompt font-medium hover:bg-slate-700 transition-colors shadow-sm"
                 >ประมวลผลข้อมูล</button>
               </div>
             </div>
