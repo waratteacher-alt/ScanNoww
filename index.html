@@ -24,28 +24,13 @@
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
         
-        /* Custom Animations */
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         
         .animate-pop { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-float { animation: float 3s ease-in-out infinite; }
         
-        /* Glassmorphism */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        /* Scrollbar */
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -59,55 +44,45 @@
         const { useState, useEffect, useRef } = React;
 
         // --- ข้อมูลเริ่มต้น ---
-        const INITIAL_CLASSES = [
-          { id: 'C01', name: 'ม.1/1 🏫' },
-          { id: 'C02', name: 'ม.1/2 🏫' },
-        ];
-
-        const INITIAL_SUBJECTS = [
-          { id: 'SUB01', name: 'คณิตศาสตร์ 📐' },
-          { id: 'SUB02', name: 'วิทยาศาสตร์ 🔬' },
-        ];
-
-        const INITIAL_STUDENTS = [
-          { id: 'STD001', number: 1, classId: 'C01', name: 'ด.ช. สมชาย รักเรียน', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somchai&backgroundColor=c0aede' },
-          { id: 'STD002', number: 2, classId: 'C01', name: 'ด.ญ. สมหญิง ขยันยิ่ง', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somying&backgroundColor=ffdfbf' },
-          { id: 'STD003', number: 3, classId: 'C01', name: 'ด.ช. มานะ อดทน', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mana&backgroundColor=b6e3f4' },
-          { id: 'STD004', number: 1, classId: 'C02', name: 'ด.ญ. ปิติ ดีใจ', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Piti&backgroundColor=d1d4f9' },
-          { id: 'STD005', number: 2, classId: 'C02', name: 'ด.ช. ชูใจ ไชโย', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chujai&backgroundColor=c0aede' },
-        ];
-
-        const INITIAL_ASSIGNMENTS = [
-          { id: 'HW01', classId: 'C01', subjectId: 'SUB01', title: 'แบบฝึกหัดคณิตศาสตร์ บทที่ 1', maxScore: 10 },
-          { id: 'HW02', classId: 'C01', subjectId: 'SUB02', title: 'รายงานวิทยาศาสตร์ เรื่อง พืช', maxScore: 20 },
-        ];
-        
-        const INITIAL_SCHEDULE = [
-          { id: 'SCH01', day: 'จันทร์', startTime: '08:30', endTime: '09:20', classId: 'C01', subjectId: 'SUB01' },
-          { id: 'SCH02', day: 'จันทร์', startTime: '09:20', endTime: '10:10', classId: 'C02', subjectId: 'SUB02' },
-          { id: 'SCH03', day: 'อังคาร', startTime: '10:20', endTime: '12:00', classId: 'C01', subjectId: 'SUB02' },
-          { id: 'SCH04', day: 'พุธ', startTime: '13:00', endTime: '14:40', classId: 'C02', subjectId: 'SUB01' },
-        ];
-
+        const INITIAL_CLASSES = [{ id: 'C01', name: 'ม.1/1 🏫' }];
+        const INITIAL_SUBJECTS = [{ id: 'SUB01', name: 'คณิตศาสตร์ 📐' }];
+        const INITIAL_STUDENTS = [{ id: 'STD001', number: 1, classId: 'C01', name: 'ด.ช. สมชาย รักเรียน', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somchai&backgroundColor=c0aede' }];
+        const INITIAL_ASSIGNMENTS = [{ id: 'HW01', classId: 'C01', subjectId: 'SUB01', title: 'แบบฝึกหัด 1', maxScore: 10 }];
+        const INITIAL_SCHEDULE = [{ id: 'SCH01', day: 'จันทร์', startTime: '08:30', endTime: '09:20', classId: 'C01', subjectId: 'SUB01' }];
         const BEHAVIOR_PRESETS = [
           { points: 1, reason: 'ตอบคำถามได้ดี', icon: '🙋‍♂️', color: 'green' },
           { points: 1, reason: 'ช่วยเหลือเพื่อน', icon: '🤝', color: 'green' },
-          { points: 2, reason: 'ทำงานเรียบร้อยมาก', icon: '✨', color: 'green' },
           { points: -1, reason: 'คุยในห้องเรียน', icon: '🗣️', color: 'red' },
-          { points: -1, reason: 'มาสาย', icon: '🏃‍♂️', color: 'red' },
           { points: -2, reason: 'เล่นมือถือขณะเรียน', icon: '📱', color: 'red' },
         ];
-
         const WEEK_DAYS = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์'];
 
+        // --- ตั้งค่าฐานข้อมูลของคุณ ---
+        const GOOGLE_SHEET_ID = "1gHxaQF5z1P-jNR02c5R8ED0HRj5NAzhYYyQrZcBXzyY";
+        // TODO: นำ URL ที่ได้จาก Google Apps Script มาวางแทนที่ข้อความด้านล่างนี้
+        const APPS_SCRIPT_URL = "YOUR_WEB_APP_URL_HERE"; 
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDIguma2wXKnY6yi0svySHVwjtmFriicbg",
+            authDomain: "tp69-point.firebaseapp.com",
+            projectId: "tp69-point",
+            storageBucket: "tp69-point.firebasestorage.app",
+            messagingSenderId: "241813486171",
+            appId: "1:241813486171:web:f25c9028b71e5fdd3f1d7e",
+            measurementId: "G-S58H8CX6MW"
+        };
+
         function App() {
-          // --- Auth State ---
           const [userRole, setUserRole] = useState('guest'); 
           const [currentUser, setCurrentUser] = useState(null);
           const [loginTab, setLoginTab] = useState('teacher'); 
           const [loginForm, setLoginForm] = useState({ username: '', password: '', studentId: '' });
           
-          // --- Data States ---
+          const [fbUser, setFbUser] = useState(null);
+          const [isConnected, setIsConnected] = useState(false);
+          const dbRef = useRef(null);
+          const firebaseLibs = useRef({});
+
           const [classes, setClasses] = useState(INITIAL_CLASSES);
           const [subjects, setSubjects] = useState(INITIAL_SUBJECTS);
           const [students, setStudents] = useState(INITIAL_STUDENTS);
@@ -118,14 +93,12 @@
           const [assignmentData, setAssignmentData] = useState({});
           const [behaviorData, setBehaviorData] = useState({});
           
-          // --- UI States ---
-          const [activeTab, setActiveTab] = useState('schedule'); // schedule เป็นหน้าแรก
-          const [currentClassId, setCurrentClassId] = useState(INITIAL_CLASSES[0]?.id || '');
-          const [currentSubjectId, setCurrentSubjectId] = useState(INITIAL_SUBJECTS[0]?.id || '');
+          const [activeTab, setActiveTab] = useState('schedule');
+          const [currentClassId, setCurrentClassId] = useState('');
+          const [currentSubjectId, setCurrentSubjectId] = useState('');
           const [barcodeInput, setBarcodeInput] = useState('');
           const [lastScanned, setLastScanned] = useState(null);
           
-          // --- Settings States ---
           const [settingsMenu, setSettingsMenu] = useState('schedule');
           const [editItem, setEditItem] = useState(null);
           const [classForm, setClassForm] = useState({ id: '', name: '' });
@@ -134,7 +107,6 @@
           const [assignForm, setAssignForm] = useState({ id: '', title: '', maxScore: '', subjectId: '', classId: '' });
           const [scheduleForm, setScheduleForm] = useState({ id: '', day: 'จันทร์', startTime: '', endTime: '', classId: '', subjectId: '' });
           
-          // Modals
           const [gradingModal, setGradingModal] = useState({ isOpen: false, student: null });
           const [behaviorModal, setBehaviorModal] = useState({ isOpen: false, student: null });
           const [randomizerModal, setRandomizerModal] = useState({ isOpen: false, result: null, spinning: false });
@@ -143,6 +115,94 @@
           const scannerInputRef = useRef(null);
           const randomIntervalRef = useRef(null);
 
+          // --- 1. FIREBASE INIT ---
+          useEffect(() => {
+              const initFirebase = async () => {
+                  try {
+                      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                      const { getAuth, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                      const { getFirestore, doc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+                      
+                      const app = initializeApp(FIREBASE_CONFIG);
+                      const auth = getAuth(app);
+                      dbRef.current = getFirestore(app);
+                      firebaseLibs.current = { doc, setDoc, onSnapshot };
+
+                      await signInAnonymously(auth);
+
+                      onAuthStateChanged(auth, (u) => { 
+                          setFbUser(u); 
+                          if(u) setIsConnected(true);
+                      });
+                  } catch (e) { 
+                      console.error("Firebase Init Error", e); 
+                  }
+              };
+              initFirebase();
+          }, []);
+
+          // --- 2. FIREBASE READ (SYNC DOWN) ---
+          useEffect(() => {
+              if (!fbUser || !dbRef.current || !firebaseLibs.current.onSnapshot) return;
+              const { doc, onSnapshot } = firebaseLibs.current;
+              
+              const unsubCore = onSnapshot(doc(dbRef.current, 'SmartClassData', 'Core'), (docSnap) => {
+                  if (docSnap.exists()) {
+                      const data = docSnap.data();
+                      if (data.classes) setClasses(data.classes);
+                      if (data.subjects) setSubjects(data.subjects);
+                      if (data.students) setStudents(data.students);
+                      if (data.assignments) setAssignments(data.assignments);
+                      if (data.schedules) setSchedules(data.schedules);
+                  }
+              });
+
+              const unsubRecords = onSnapshot(doc(dbRef.current, 'SmartClassData', 'Records'), (docSnap) => {
+                  if (docSnap.exists()) {
+                      const data = docSnap.data();
+                      if (data.attendanceData) setAttendanceData(data.attendanceData);
+                      if (data.assignmentData) setAssignmentData(data.assignmentData);
+                      if (data.behaviorData) setBehaviorData(data.behaviorData);
+                  }
+              });
+
+              return () => { unsubCore(); unsubRecords(); };
+          }, [fbUser]);
+
+          // --- 3. DUAL-SYNC LOGIC (FIREBASE + GOOGLE SHEETS) ---
+          const syncToGoogleSheets = (type, payload) => {
+              if (APPS_SCRIPT_URL === "YOUR_WEB_APP_URL_HERE") return; // ข้ามถ้ายังไม่ใส่ URL
+              
+              fetch(APPS_SCRIPT_URL, {
+                  method: 'POST',
+                  mode: 'no-cors', // สำคัญ: เพื่อไม่ให้ติดปัญหา CORS Policy ของ Google
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sheetId: GOOGLE_SHEET_ID, type: type, data: payload })
+              }).catch(err => console.error("Sheets Sync Error:", err));
+          };
+
+          const syncCore = async (overrides) => {
+              const payload = { classes, subjects, students, assignments, schedules, ...overrides };
+              // 1. Save to Firebase
+              if (fbUser && dbRef.current) {
+                  try { await firebaseLibs.current.setDoc(firebaseLibs.current.doc(dbRef.current, 'SmartClassData', 'Core'), payload, { merge: true }); } 
+                  catch (e) { console.error("Firebase save failed", e); }
+              }
+              // 2. Save to Google Sheets
+              syncToGoogleSheets('Core', payload);
+          };
+
+          const syncRecords = async (overrides) => {
+              const payload = { attendanceData, assignmentData, behaviorData, ...overrides };
+              // 1. Save to Firebase
+              if (fbUser && dbRef.current) {
+                  try { await firebaseLibs.current.setDoc(firebaseLibs.current.doc(dbRef.current, 'SmartClassData', 'Records'), payload, { merge: true }); } 
+                  catch (e) { console.error("Firebase save failed", e); }
+              }
+              // 2. Save to Google Sheets
+              syncToGoogleSheets('Records', payload);
+          };
+
           // Focus scanner auto
           useEffect(() => {
             if (userRole === 'teacher' && ['attendance', 'assignment', 'behavior'].includes(activeTab) && !gradingModal.isOpen && !behaviorModal.isOpen && !randomizerModal.isOpen) {
@@ -150,27 +210,24 @@
             }
           }, [activeTab, userRole, gradingModal.isOpen, behaviorModal.isOpen, randomizerModal.isOpen, currentClassId, currentSubjectId]);
 
-          // Sync initial forms
+          // Set Initial Selections
           useEffect(() => {
+             if(classes.length > 0 && !currentClassId) setCurrentClassId(classes[0].id);
+             if(subjects.length > 0 && !currentSubjectId) setCurrentSubjectId(subjects[0].id);
              if(classes.length > 0 && !studentForm.classId) setStudentForm(prev => ({...prev, classId: classes[0].id}));
              if(classes.length > 0 && subjects.length > 0 && !assignForm.classId) setAssignForm(prev => ({...prev, classId: classes[0].id, subjectId: subjects[0].id}));
              if(classes.length > 0 && subjects.length > 0 && !scheduleForm.classId) setScheduleForm(prev => ({...prev, classId: classes[0].id, subjectId: subjects[0].id}));
           }, [classes, subjects]);
 
-          // Filtered Data
           const filteredStudents = students.filter(s => s.classId === currentClassId);
           const filteredAssignments = assignments.filter(a => a.subjectId === currentSubjectId && a.classId === currentClassId);
 
-          // --- Handlers ---
           const handleLogin = (e) => {
             e.preventDefault();
             if (loginTab === 'teacher') {
               if (loginForm.username === 'admin' && loginForm.password === 'password') {
-                setUserRole('teacher');
-                setActiveTab('schedule'); // เริ่มต้นที่หน้าตารางสอนเสมอ
-              } else {
-                alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ลอง admin / password)');
-              }
+                setUserRole('teacher'); setActiveTab('schedule');
+              } else { alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ลอง admin / password)'); }
             } else {
               const student = students.find(s => s.id === loginForm.studentId.toUpperCase());
               if (student) { setUserRole('student'); setCurrentUser(student); } 
@@ -178,16 +235,10 @@
             }
           };
 
-          const handleLogout = () => {
-            setUserRole('guest');
-            setCurrentUser(null);
-            setLoginForm({ username: '', password: '', studentId: '' });
-          };
+          const handleLogout = () => { setUserRole('guest'); setCurrentUser(null); setLoginForm({ username: '', password: '', studentId: '' }); };
 
           const handleEnterClass = (classId, subjectId) => {
-              setCurrentClassId(classId);
-              setCurrentSubjectId(subjectId);
-              setActiveTab('attendance'); // สลับไปหน้าเช็คชื่อทันที
+              setCurrentClassId(classId); setCurrentSubjectId(subjectId); setActiveTab('attendance');
           };
 
           const showFeedback = (student, message, type) => {
@@ -204,16 +255,17 @@
 
             if (student) {
               if (student.classId !== currentClassId) {
-                showFeedback(null, `นักเรียนไม่อยู่ในห้อง ${classes.find(c=>c.id===currentClassId)?.name}`, 'error');
+                showFeedback(null, `นักเรียนไม่อยู่ในห้องนี้`, 'error');
                 setBarcodeInput(''); return;
               }
 
-              const now = new Date();
-              const timeString = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+              const timeString = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 
               if (activeTab === 'attendance') {
                 const key = `${code}_${currentSubjectId}`;
-                setAttendanceData(prev => ({ ...prev, [key]: { status: 'present', time: timeString } }));
+                const newAtt = { ...attendanceData, [key]: { status: 'present', time: timeString } };
+                setAttendanceData(newAtt);
+                syncRecords({ attendanceData: newAtt });
                 showFeedback(student, 'บันทึกเข้าเรียนสำเร็จ ✨', 'success');
               } 
               else if (activeTab === 'behavior') {
@@ -227,59 +279,52 @@
                 setModalScores(currentScores);
                 setGradingModal({ isOpen: true, student });
               }
-            } else {
-              showFeedback(null, `ไม่พบรหัส: ${code} 🚨`, 'error');
-            }
+            } else { showFeedback(null, `ไม่พบรหัส: ${code} 🚨`, 'error'); }
             setBarcodeInput('');
           };
 
           const handleAddBehavior = (points, reason) => {
              const key = `${behaviorModal.student.id}_${currentSubjectId}`;
              const newLog = { points, reason, time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) };
-             setBehaviorData(prev => ({
-                 ...prev,
-                 [key]: [...(prev[key] || []), newLog]
-             }));
+             const newBeh = { ...behaviorData, [key]: [...(behaviorData[key] || []), newLog] };
+             setBehaviorData(newBeh);
+             syncRecords({ behaviorData: newBeh });
              showFeedback(behaviorModal.student, `บันทึกจิตพิสัย: ${reason} (${points > 0 ? '+'+points : points})`, points > 0 ? 'success' : 'error');
              setBehaviorModal({ isOpen: false, student: null });
           };
 
           const getBehaviorScore = (studentId) => {
              const logs = behaviorData[`${studentId}_${currentSubjectId}`] || [];
-             return logs.reduce((sum, log) => sum + log.points, 0); // Base 0
+             return logs.reduce((sum, log) => sum + log.points, 0); 
           };
 
           const handleSaveGrading = () => {
             const { student } = gradingModal;
             const timeString = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             
-            setAssignmentData(prev => {
-              const newData = { ...prev };
-              filteredAssignments.forEach(a => {
-                const val = modalScores[a.id];
-                if (val !== '' && val !== undefined) {
-                  if (!newData[a.id]) newData[a.id] = {};
-                  newData[a.id] = { ...newData[a.id], [student.id]: { status: 'submitted', time: timeString, score: parseFloat(val) } };
-                }
-              });
-              return newData;
+            const newData = { ...assignmentData };
+            filteredAssignments.forEach(a => {
+              const val = modalScores[a.id];
+              if (val !== '' && val !== undefined) {
+                if (!newData[a.id]) newData[a.id] = {};
+                newData[a.id] = { ...newData[a.id], [student.id]: { status: 'submitted', time: timeString, score: parseFloat(val) } };
+              }
             });
+            setAssignmentData(newData);
+            syncRecords({ assignmentData: newData });
+            
             showFeedback(student, 'บันทึกคะแนนงานเรียบร้อย 🎯', 'success');
             setGradingModal({ isOpen: false, student: null });
           };
 
           const startRandomizer = () => {
-             if(filteredStudents.length === 0) { alert('ไม่มีนักเรียนในห้องนี้'); return; }
+             if(filteredStudents.length === 0) return alert('ไม่มีนักเรียนในห้องนี้');
              setRandomizerModal({ isOpen: true, result: filteredStudents[0], spinning: true });
-             
              let ticks = 0;
              randomIntervalRef.current = setInterval(() => {
-                 setRandomizerModal(prev => ({ 
-                     ...prev, 
-                     result: filteredStudents[Math.floor(Math.random() * filteredStudents.length)] 
-                 }));
+                 setRandomizerModal(prev => ({ ...prev, result: filteredStudents[Math.floor(Math.random() * filteredStudents.length)] }));
                  ticks++;
-                 if(ticks > 25) { // Stop after 25 ticks
+                 if(ticks > 25) { 
                      clearInterval(randomIntervalRef.current);
                      const winner = filteredStudents[Math.floor(Math.random() * filteredStudents.length)];
                      setRandomizerModal({ isOpen: true, result: winner, spinning: false });
@@ -287,13 +332,63 @@
              }, 80);
           };
 
-          // Settings
+          // Settings Management (With Sync)
           const resetForms = () => { setEditItem(null); setClassForm({ id: '', name: '' }); setSubjectForm({ id: '', name: '' }); setStudentForm({ id: '', number: '', name: '', classId: classes[0]?.id || '' }); setAssignForm({ id: '', title: '', maxScore: '', subjectId: subjects[0]?.id || '', classId: classes[0]?.id || '' }); setScheduleForm({ id: '', day: 'จันทร์', startTime: '', endTime: '', classId: classes[0]?.id || '', subjectId: subjects[0]?.id || '' }); };
-          const handleSaveClass = (e) => { e.preventDefault(); if(editItem) setClasses(classes.map(c => c.id === editItem.id ? { ...c, ...classForm } : c)); else setClasses([...classes, classForm]); resetForms(); };
-          const handleSaveSubject = (e) => { e.preventDefault(); if(editItem) setSubjects(subjects.map(s => s.id === editItem.id ? { ...s, ...subjectForm } : s)); else setSubjects([...subjects, subjectForm]); resetForms(); };
-          const handleSaveStudent = (e) => { e.preventDefault(); if(editItem) setStudents(students.map(s => s.id === editItem.id ? { ...s, ...studentForm, image: s.image } : s)); else setStudents([...students, { ...studentForm, image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentForm.id}&backgroundColor=b6e3f4` }]); resetForms(); };
-          const handleSaveAssign = (e) => { e.preventDefault(); if(editItem) setAssignments(assignments.map(a => a.id === editItem.id ? { ...a, ...assignForm, maxScore: Number(assignForm.maxScore) } : a)); else setAssignments([...assignments, { ...assignForm, maxScore: Number(assignForm.maxScore) }]); resetForms(); };
-          const handleSaveSchedule = (e) => { e.preventDefault(); if(editItem) setSchedules(schedules.map(s => s.id === editItem.id ? { ...s, ...scheduleForm } : s)); else setSchedules([...schedules, scheduleForm]); resetForms(); };
+          
+          const handleSaveClass = (e) => { e.preventDefault(); const n = editItem ? classes.map(c => c.id === editItem.id ? { ...c, ...classForm } : c) : [...classes, classForm]; setClasses(n); syncCore({classes: n}); resetForms(); };
+          const handleDeleteClass = (id) => { const n = classes.filter(x=>x.id!==id); setClasses(n); syncCore({classes: n}); };
+          
+          const handleSaveSubject = (e) => { e.preventDefault(); const n = editItem ? subjects.map(s => s.id === editItem.id ? { ...s, ...subjectForm } : s) : [...subjects, subjectForm]; setSubjects(n); syncCore({subjects: n}); resetForms(); };
+          const handleDeleteSubject = (id) => { const n = subjects.filter(x=>x.id!==id); setSubjects(n); syncCore({subjects: n}); };
+
+          const handleSaveStudent = (e) => { e.preventDefault(); const n = editItem ? students.map(s => s.id === editItem.id ? { ...s, ...studentForm, image: s.image } : s) : [...students, { ...studentForm, image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentForm.id}&backgroundColor=b6e3f4` }]; setStudents(n); syncCore({students: n}); resetForms(); };
+          const handleDeleteStudent = (id) => { const n = students.filter(x=>x.id!==id); setStudents(n); syncCore({students: n}); };
+
+          const handleSaveAssign = (e) => { e.preventDefault(); const n = editItem ? assignments.map(a => a.id === editItem.id ? { ...a, ...assignForm, maxScore: Number(assignForm.maxScore) } : a) : [...assignments, { ...assignForm, maxScore: Number(assignForm.maxScore) }]; setAssignments(n); syncCore({assignments: n}); resetForms(); };
+          const handleDeleteAssign = (id) => { const n = assignments.filter(x=>x.id!==id); setAssignments(n); syncCore({assignments: n}); };
+
+          const handleSaveSchedule = (e) => { e.preventDefault(); const n = editItem ? schedules.map(s => s.id === editItem.id ? { ...s, ...scheduleForm } : s) : [...schedules, scheduleForm]; setSchedules(n); syncCore({schedules: n}); resetForms(); };
+          const handleDeleteSchedule = (id) => { const n = schedules.filter(x=>x.id!==id); setSchedules(n); syncCore({schedules: n}); };
+
+          const exportToCSV = () => {
+              let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+              let headerRow = ["เลขที่", "ชื่อ-นามสกุล", "เข้าเรียน", "จิตพิสัย"];
+              filteredAssignments.forEach(a => headerRow.push(a.title + " (คะแนนเต็ม " + a.maxScore + ")"));
+              headerRow.push("คะแนนรวม");
+              
+              csvContent += headerRow.join(",") + "\r\n";
+              
+              filteredStudents.sort((a,b) => a.number - b.number).forEach(s => {
+                  let row = [];
+                  row.push(s.number);
+                  row.push(`"${s.name}"`); 
+                  
+                  const present = attendanceData[`${s.id}_${currentSubjectId}`]?.status === 'present' ? '1' : '0';
+                  row.push(present);
+                  
+                  const behaviorPts = getBehaviorScore(s.id);
+                  row.push(behaviorPts);
+                  
+                  let total = 0, max = 0;
+                  filteredAssignments.forEach(a => {
+                      const sc = assignmentData[a.id]?.[s.id]?.score;
+                      total += (sc || 0); max += a.maxScore;
+                      row.push(sc !== undefined ? sc : '0');
+                  });
+                  row.push(total);
+                  
+                  csvContent += row.join(",") + "\r\n";
+              });
+              
+              const className = classes.find(c=>c.id===currentClassId)?.name || 'Class';
+              const subjectName = subjects.find(s=>s.id===currentSubjectId)?.name || 'Subject';
+              
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", `รายงาน_${className}_${subjectName}.csv`);
+              document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          };
 
           if (userRole === 'guest') {
             return (
@@ -303,44 +398,27 @@
 
                 <div className="max-w-md w-full glass-panel rounded-[2rem] shadow-2xl overflow-hidden relative z-10 animate-pop border border-white/20">
                   <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-10 text-center relative">
-                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md shadow-lg">
-                        <i className="fas fa-rocket text-4xl text-white animate-float"></i>
-                    </div>
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md shadow-lg"><i className="fas fa-rocket text-4xl text-white animate-float"></i></div>
                     <h1 className="text-3xl font-bold text-white tracking-wide">Smart Class Pro</h1>
                     <p className="text-indigo-100 mt-2 font-light">ยกระดับการสอนให้เป็นเรื่องง่าย 🚀</p>
                   </div>
                   
                   <div className="flex bg-white/50 border-b border-white/40">
-                    <button onClick={() => setLoginTab('teacher')} className={`flex-1 py-4 font-semibold text-sm transition-all ${loginTab === 'teacher' ? 'text-indigo-700 bg-white shadow-sm border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-white/40'}`}>
-                      👨‍🏫 ครูผู้สอน
-                    </button>
-                    <button onClick={() => setLoginTab('student')} className={`flex-1 py-4 font-semibold text-sm transition-all ${loginTab === 'student' ? 'text-indigo-700 bg-white shadow-sm border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-white/40'}`}>
-                      👨‍🎓 นักเรียน / ผู้ปกครอง
-                    </button>
+                    <button onClick={() => setLoginTab('teacher')} className={`flex-1 py-4 font-semibold text-sm transition-all ${loginTab === 'teacher' ? 'text-indigo-700 bg-white shadow-sm border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-white/40'}`}>👨‍🏫 ครูผู้สอน</button>
+                    <button onClick={() => setLoginTab('student')} className={`flex-1 py-4 font-semibold text-sm transition-all ${loginTab === 'student' ? 'text-indigo-700 bg-white shadow-sm border-b-2 border-indigo-600' : 'text-slate-500 hover:bg-white/40'}`}>👨‍🎓 นักเรียน / ผู้ปกครอง</button>
                   </div>
 
                   <div className="p-8 bg-white/80">
                     <form onSubmit={handleLogin} className="space-y-5">
                       {loginTab === 'teacher' ? (
                         <React.Fragment>
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้ใช้ (Username)</label>
-                            <input type="text" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none" value={loginForm.username} onChange={(e) => setLoginForm({...loginForm, username: e.target.value})} placeholder="admin" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
-                            <input type="password" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none" value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} placeholder="password" />
-                          </div>
+                          <div><label className="block text-sm font-medium text-slate-700 mb-1">Username</label><input type="text" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none" value={loginForm.username} onChange={(e) => setLoginForm({...loginForm, username: e.target.value})} placeholder="admin" /></div>
+                          <div><label className="block text-sm font-medium text-slate-700 mb-1">Password</label><input type="password" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none" value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} placeholder="password" /></div>
                         </React.Fragment>
                       ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">รหัสนักเรียน (Student ID)</label>
-                          <input type="text" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none uppercase font-mono" value={loginForm.studentId} onChange={(e) => setLoginForm({...loginForm, studentId: e.target.value})} placeholder="STD001" />
-                        </div>
+                        <div><label className="block text-sm font-medium text-slate-700 mb-1">รหัสนักเรียน</label><input type="text" className="w-full px-5 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none uppercase font-mono" value={loginForm.studentId} onChange={(e) => setLoginForm({...loginForm, studentId: e.target.value})} placeholder="STD001" /></div>
                       )}
-                      <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-2xl transition-all mt-6 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1">
-                        เข้าสู่ระบบ ⚡
-                      </button>
+                      <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:-translate-y-1 transition-all mt-6">เข้าสู่ระบบ ⚡</button>
                     </form>
                   </div>
                 </div>
@@ -350,375 +428,105 @@
 
           return (
             <div className="flex h-screen overflow-hidden bg-slate-50">
-              {/* Sidebar Menu */}
               <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-20 print:hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-bl-full opacity-20 pointer-events-none"></div>
-                
                 <div className="p-6 border-b border-slate-800/50 relative z-10">
-                  <h1 className="text-2xl font-bold flex items-center gap-3">
-                    <span className="bg-gradient-to-br from-indigo-400 to-purple-400 text-transparent bg-clip-text">SmartClass</span>
-                  </h1>
-                  <div className="flex items-center gap-3 mt-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-lg shadow-inner">👨‍🏫</div>
-                    <div>
-                      <div className="text-xs text-indigo-300 font-medium">เข้าสู่ระบบโดย</div>
-                      <div className="text-sm font-bold text-white">ครูผู้สอน (Admin)</div>
-                    </div>
+                  <h1 className="text-2xl font-bold flex items-center gap-3"><span className="bg-gradient-to-br from-indigo-400 to-purple-400 text-transparent bg-clip-text">SmartClass</span></h1>
+                  <div className="flex items-center justify-between mt-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                    <div className="flex items-center gap-3"><div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-lg shadow-inner">👨‍🏫</div><div><div className="text-xs text-indigo-300 font-medium">เข้าสู่ระบบโดย</div><div className="text-sm font-bold text-white">Admin</div></div></div>
+                    <div className="flex flex-col items-end" title={isConnected ? "เชื่อมต่อ Cloud เรียบร้อย" : "กำลังโหลด / โหมด Local"}><div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></div><span className="text-[9px] mt-1 text-slate-400 font-mono uppercase">{isConnected ? 'ONLINE' : 'CONNECTING'}</span></div>
                   </div>
                 </div>
                 
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto z-10">
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 px-3">เมนูหลัก</div>
-                  
-                  {/* ปุ่มตารางสอน */}
-                  <button onClick={() => setActiveTab('schedule')} 
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium ${activeTab === 'schedule' ? 'bg-indigo-600 shadow-lg shadow-indigo-900/50 text-white' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}>
-                      <i className={`far fa-calendar-alt ${activeTab === 'schedule' ? 'text-white' : 'text-blue-400'} text-lg w-6 text-center`}></i>
-                      ตารางสอน
-                  </button>
+                  <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-medium ${activeTab === 'schedule' ? 'bg-indigo-600 shadow-lg text-white' : 'hover:bg-slate-800 text-slate-300'}`}><i className={`far fa-calendar-alt ${activeTab === 'schedule' ? 'text-white' : 'text-blue-400'} text-lg w-6 text-center`}></i> ตารางสอน</button>
 
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8 px-3">โหมดห้องเรียน</div>
-                  {[
-                    { id: 'attendance', icon: 'fa-user-check', label: 'เช็คชื่อเข้าเรียน', color: 'text-emerald-400' },
-                    { id: 'behavior', icon: 'fa-star', label: 'ให้คะแนนจิตพิสัย', color: 'text-amber-400' },
-                    { id: 'assignment', icon: 'fa-tasks', label: 'ตรวจรับงาน & ให้คะแนน', color: 'text-sky-400' },
-                  ].map(menu => (
-                    <button key={menu.id} onClick={() => setActiveTab(menu.id)} 
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium ${activeTab === menu.id ? 'bg-indigo-600 shadow-lg shadow-indigo-900/50 text-white' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}>
-                      <i className={`fas ${menu.icon} ${activeTab === menu.id ? 'text-white' : menu.color} text-lg w-6 text-center`}></i>
-                      {menu.label}
-                    </button>
+                  {[{ id: 'attendance', icon: 'fa-user-check', label: 'เช็คชื่อเข้าเรียน', color: 'text-emerald-400' }, { id: 'behavior', icon: 'fa-star', label: 'ให้คะแนนจิตพิสัย', color: 'text-amber-400' }, { id: 'assignment', icon: 'fa-tasks', label: 'ตรวจรับงาน & ให้คะแนน', color: 'text-sky-400' }].map(menu => (
+                    <button key={menu.id} onClick={() => setActiveTab(menu.id)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-medium ${activeTab === menu.id ? 'bg-indigo-600 shadow-lg text-white' : 'hover:bg-slate-800 text-slate-300'}`}><i className={`fas ${menu.icon} ${activeTab === menu.id ? 'text-white' : menu.color} text-lg w-6 text-center`}></i> {menu.label}</button>
                   ))}
 
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8 px-3">ระบบจัดการ</div>
-                  {[
-                    { id: 'reports', icon: 'fa-chart-bar', label: 'รายงานสรุปผล', color: 'text-purple-400' },
-                    { id: 'settings', icon: 'fa-cog', label: 'ตั้งค่าระบบ', color: 'text-slate-400' },
-                  ].map(menu => (
-                    <button key={menu.id} onClick={() => setActiveTab(menu.id)} 
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium ${activeTab === menu.id ? 'bg-indigo-600 shadow-lg shadow-indigo-900/50 text-white' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}>
-                      <i className={`fas ${menu.icon} ${activeTab === menu.id ? 'text-white' : menu.color} text-lg w-6 text-center`}></i>
-                      {menu.label}
-                    </button>
+                  {[{ id: 'reports', icon: 'fa-chart-bar', label: 'รายงานสรุปผล', color: 'text-purple-400' }, { id: 'settings', icon: 'fa-cog', label: 'ตั้งค่าระบบ', color: 'text-slate-400' }].map(menu => (
+                    <button key={menu.id} onClick={() => setActiveTab(menu.id)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-medium ${activeTab === menu.id ? 'bg-indigo-600 shadow-lg text-white' : 'hover:bg-slate-800 text-slate-300'}`}><i className={`fas ${menu.icon} ${activeTab === menu.id ? 'text-white' : menu.color} text-lg w-6 text-center`}></i> {menu.label}</button>
                   ))}
                 </nav>
-                
-                <div className="p-5 relative z-10">
-                  <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white rounded-2xl transition-colors font-medium group">
-                    <i className="fas fa-sign-out-alt group-hover:rotate-180 transition-transform duration-300"></i> ออกจากระบบ
-                  </button>
-                </div>
+                <div className="p-5 relative z-10"><button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-slate-800 hover:bg-rose-500 text-slate-300 hover:text-white rounded-2xl transition-colors font-medium group"><i className="fas fa-sign-out-alt group-hover:rotate-180 transition-transform"></i> ออกจากระบบ</button></div>
               </div>
 
-              {/* Main Content Area */}
               <div className="flex-1 flex flex-col h-full relative">
-                
-                {/* Header Context Bar (ซ่อนเมื่ออยู่หน้าตารางสอนและตั้งค่า) */}
                 {['attendance', 'behavior', 'assignment', 'reports'].includes(activeTab) && (
                   <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex flex-wrap gap-4 justify-between items-center z-10 shadow-sm sticky top-0 print:hidden">
                     <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-3 bg-slate-100/80 px-4 py-2 rounded-2xl border border-slate-200">
-                        <span className="text-slate-500 text-sm font-medium"><i className="fas fa-door-open text-indigo-400"></i> ห้อง:</span>
-                        <select value={currentClassId} onChange={e=>setCurrentClassId(e.target.value)} className="bg-transparent border-none text-indigo-700 font-bold outline-none cursor-pointer text-sm">
-                          {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-3 bg-slate-100/80 px-4 py-2 rounded-2xl border border-slate-200">
-                        <span className="text-slate-500 text-sm font-medium"><i className="fas fa-book text-purple-400"></i> วิชา:</span>
-                        <select value={currentSubjectId} onChange={e=>setCurrentSubjectId(e.target.value)} className="bg-transparent border-none text-purple-700 font-bold outline-none cursor-pointer text-sm">
-                          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                      </div>
+                      <div className="flex items-center gap-3 bg-slate-100/80 px-4 py-2 rounded-2xl border border-slate-200"><span className="text-slate-500 text-sm font-medium"><i className="fas fa-door-open text-indigo-400"></i> ห้อง:</span><select value={currentClassId} onChange={e=>setCurrentClassId(e.target.value)} className="bg-transparent border-none text-indigo-700 font-bold outline-none text-sm">{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+                      <div className="flex items-center gap-3 bg-slate-100/80 px-4 py-2 rounded-2xl border border-slate-200"><span className="text-slate-500 text-sm font-medium"><i className="fas fa-book text-purple-400"></i> วิชา:</span><select value={currentSubjectId} onChange={e=>setCurrentSubjectId(e.target.value)} className="bg-transparent border-none text-purple-700 font-bold outline-none text-sm">{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
                     </div>
-                    
-                    {activeTab !== 'reports' && (
-                        <button onClick={startRandomizer} className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white px-5 py-2.5 rounded-2xl font-bold shadow-md shadow-orange-200 flex items-center gap-2 hover:scale-105 transition-transform">
-                          <i className="fas fa-dice text-lg"></i> สุ่มนักเรียน
-                        </button>
-                    )}
+                    {activeTab !== 'reports' && (<button onClick={startRandomizer} className="bg-gradient-to-r from-amber-400 to-orange-500 hover:scale-105 text-white px-5 py-2.5 rounded-2xl font-bold shadow-md transition-transform flex items-center gap-2"><i className="fas fa-dice text-lg"></i> สุ่มนักเรียน</button>)}
                   </header>
                 )}
 
                 <main className="flex-1 overflow-y-auto p-8 relative">
-                  
-                  {/* --- SCHEDULE TAB --- */}
                   {activeTab === 'schedule' && (
                     <div className="max-w-6xl mx-auto space-y-8 animate-pop">
-                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
-                         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                         <h2 className="text-3xl font-bold mb-2 relative z-10 flex items-center gap-3">🗓️ ตารางสอนประจำสัปดาห์</h2>
-                         <p className="text-indigo-100 relative z-10">คลิกที่การ์ดคาบเรียนเพื่อเข้าสู่โหมดเช็คชื่อ และจัดการชั้นเรียนในวิชานั้นได้ทันที</p>
-                      </div>
-
+                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden"><div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div><h2 className="text-3xl font-bold mb-2 relative z-10 flex items-center gap-3">🗓️ ตารางสอนประจำสัปดาห์</h2><p className="text-indigo-100 relative z-10">คลิกที่การ์ดคาบเรียนเพื่อเข้าสู่โหมดเช็คชื่อ และจัดการชั้นเรียนในวิชานั้นได้ทันที</p></div>
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
                          {WEEK_DAYS.map(day => (
-                           <div key={day} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-5">
-                              <h3 className="font-bold text-lg text-slate-700 border-b-2 border-slate-100 pb-3 mb-4 text-center">{day}</h3>
-                              <div className="space-y-4">
+                           <div key={day} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-5"><h3 className="font-bold text-lg text-slate-700 border-b-2 border-slate-100 pb-3 mb-4 text-center">{day}</h3><div className="space-y-4">
                                  {schedules.filter(s => s.day === day).sort((a,b)=>a.startTime.localeCompare(b.startTime)).map(s => {
-                                    const cName = classes.find(c=>c.id === s.classId)?.name;
-                                    const subName = subjects.find(sub=>sub.id === s.subjectId)?.name;
-                                    return (
-                                       <div key={s.id} onClick={() => handleEnterClass(s.classId, s.subjectId)}
-                                            className="group p-5 rounded-[1.5rem] border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1">
-                                          <div className="text-xs font-mono text-indigo-500 group-hover:text-indigo-200 mb-2 font-bold bg-white group-hover:bg-indigo-700 inline-block px-2 py-1 rounded-lg">
-                                            <i className="far fa-clock"></i> {s.startTime} - {s.endTime}
-                                          </div>
-                                          <div className="font-bold text-base mb-2 leading-tight">{subName}</div>
-                                          <div className="text-sm font-medium flex justify-between items-center text-slate-600 group-hover:text-indigo-100">
-                                             <span><i className="fas fa-users text-indigo-400 group-hover:text-indigo-300"></i> {cName}</span>
-                                             <i className="fas fa-arrow-right opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0"></i>
-                                          </div>
-                                       </div>
-                                    )
+                                    const cName = classes.find(c=>c.id === s.classId)?.name; const subName = subjects.find(sub=>sub.id === s.subjectId)?.name;
+                                    return (<div key={s.id} onClick={() => handleEnterClass(s.classId, s.subjectId)} className="group p-5 rounded-[1.5rem] border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1"><div className="text-xs font-mono text-indigo-500 group-hover:text-indigo-200 mb-2 font-bold bg-white group-hover:bg-indigo-700 inline-block px-2 py-1 rounded-lg"><i className="far fa-clock"></i> {s.startTime} - {s.endTime}</div><div className="font-bold text-base mb-2 leading-tight">{subName}</div><div className="text-sm font-medium flex justify-between items-center text-slate-600 group-hover:text-indigo-100"><span><i className="fas fa-users text-indigo-400 group-hover:text-indigo-300"></i> {cName}</span><i className="fas fa-arrow-right opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0"></i></div></div>)
                                  })}
-                                 {schedules.filter(s => s.day === day).length === 0 && (
-                                    <div className="text-center py-10 text-slate-400 text-sm font-medium border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50">ว่าง</div>
-                                 )}
-                              </div>
-                           </div>
+                                 {schedules.filter(s => s.day === day).length === 0 && (<div className="text-center py-10 text-slate-400 text-sm font-medium border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50">ว่าง</div>)}
+                              </div></div>
                          ))}
                       </div>
                     </div>
                   )}
 
-                  {/* --- REPORTS TAB --- */}
                   {activeTab === 'reports' && (
                      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 animate-pop">
-                        <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3"><i className="fas fa-chart-pie text-purple-500"></i> รายงานสรุปผลรวม</h2>
-                                <p className="text-slate-500 mt-1">ห้อง {classes.find(c=>c.id===currentClassId)?.name} | วิชา {subjects.find(s=>s.id===currentSubjectId)?.name}</p>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
+                            <div><h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3"><i className="fas fa-chart-pie text-purple-500"></i> รายงานสรุปผลรวม</h2><p className="text-slate-500 mt-1">ห้อง {classes.find(c=>c.id===currentClassId)?.name} | วิชา {subjects.find(s=>s.id===currentSubjectId)?.name}</p></div>
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <button onClick={exportToCSV} className="print:hidden flex-1 md:flex-none bg-emerald-600 text-white px-5 py-2.5 rounded-2xl hover:bg-emerald-700 font-bold shadow-md flex items-center justify-center gap-2"><i className="fas fa-file-csv"></i> บันทึกไฟล์ CSV Excel</button>
+                                <button onClick={() => window.print()} className="print:hidden flex-1 md:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-2xl hover:bg-slate-900 font-bold shadow-md flex items-center justify-center gap-2"><i className="fas fa-print"></i> พิมพ์ PDF</button>
                             </div>
-                            <button onClick={() => window.print()} className="print:hidden bg-slate-800 text-white px-5 py-2.5 rounded-2xl hover:bg-slate-900 transition-colors font-bold shadow-md flex items-center gap-2">
-                                <i className="fas fa-print"></i> พิมพ์รายงาน
-                            </button>
                         </div>
-                        
                         {filteredStudents.length > 0 ? (
-                            <div className="overflow-x-auto rounded-xl border border-slate-200">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-50 text-slate-700">
-                                        <tr>
-                                            <th className="border-b px-4 py-3 text-center font-semibold">เลขที่</th>
-                                            <th className="border-b px-4 py-3 font-semibold min-w-[200px]">ชื่อ - นามสกุล</th>
-                                            <th className="border-b border-l px-4 py-3 text-center font-semibold bg-emerald-50">เข้าเรียน</th>
-                                            <th className="border-b border-l px-4 py-3 text-center font-semibold bg-amber-50">จิตพิสัย</th>
-                                            {filteredAssignments.map(a => <th key={a.id} className="border-b border-l px-4 py-3 text-center text-xs font-semibold">{a.title}<br/><span className="text-indigo-500">({a.maxScore})</span></th>)}
-                                            {filteredAssignments.length > 0 && <th className="border-b border-l px-4 py-3 text-center bg-indigo-50 font-semibold">คะแนนรวม</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {filteredStudents.sort((a,b) => a.number - b.number).map(s => {
-                                            const present = attendanceData[`${s.id}_${currentSubjectId}`]?.status === 'present';
-                                            const behaviorPts = getBehaviorScore(s.id);
-                                            let total = 0, max = 0;
-                                            return (
-                                                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-4 py-3 text-center text-slate-500">{s.number}</td>
-                                                    <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
-                                                    <td className="border-l px-4 py-3 text-center bg-emerald-50/30">{present ? '✅' : '-'}</td>
-                                                    <td className={`border-l px-4 py-3 text-center font-bold ${behaviorPts > 0 ? 'text-emerald-600' : behaviorPts < 0 ? 'text-rose-600' : 'text-slate-400'}`}>{behaviorPts !== 0 ? behaviorPts : '-'}</td>
-                                                    {filteredAssignments.map(a => {
-                                                        const sc = assignmentData[a.id]?.[s.id]?.score;
-                                                        total += (sc || 0); max += a.maxScore;
-                                                        return <td key={a.id} className="border-l px-4 py-3 text-center text-slate-600">{sc !== undefined ? sc : '-'}</td>
-                                                    })}
-                                                    {filteredAssignments.length > 0 && <td className="border-l px-4 py-3 text-center font-bold text-indigo-700 bg-indigo-50/50">{total}/{max}</td>}
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-dashed">
-                                กรุณาเลือกห้องเรียนที่มีนักเรียน
-                            </div>
-                        )}
+                            <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full text-sm text-left"><thead className="bg-slate-50 text-slate-700"><tr><th className="border-b px-4 py-3 text-center font-semibold">เลขที่</th><th className="border-b px-4 py-3 font-semibold min-w-[200px]">ชื่อ - นามสกุล</th><th className="border-b border-l px-4 py-3 text-center font-semibold bg-emerald-50">เข้าเรียน</th><th className="border-b border-l px-4 py-3 text-center font-semibold bg-amber-50">จิตพิสัย</th>{filteredAssignments.map(a => <th key={a.id} className="border-b border-l px-4 py-3 text-center text-xs font-semibold">{a.title}<br/><span className="text-indigo-500">({a.maxScore})</span></th>)}{filteredAssignments.length > 0 && <th className="border-b border-l px-4 py-3 text-center bg-indigo-50 font-semibold">คะแนนรวม</th>}</tr></thead><tbody className="divide-y divide-slate-100">
+                                {filteredStudents.sort((a,b) => a.number - b.number).map(s => {
+                                    const present = attendanceData[`${s.id}_${currentSubjectId}`]?.status === 'present'; const behaviorPts = getBehaviorScore(s.id); let total = 0, max = 0;
+                                    return (<tr key={s.id} className="hover:bg-slate-50"><td className="px-4 py-3 text-center text-slate-500">{s.number}</td><td className="px-4 py-3 font-medium text-slate-800">{s.name}</td><td className="border-l px-4 py-3 text-center bg-emerald-50/30">{present ? '✅' : '-'}</td><td className={`border-l px-4 py-3 text-center font-bold ${behaviorPts > 0 ? 'text-emerald-600' : behaviorPts < 0 ? 'text-rose-600' : 'text-slate-400'}`}>{behaviorPts !== 0 ? behaviorPts : '-'}</td>{filteredAssignments.map(a => { const sc = assignmentData[a.id]?.[s.id]?.score; total += (sc || 0); max += a.maxScore; return <td key={a.id} className="border-l px-4 py-3 text-center text-slate-600">{sc !== undefined ? sc : '-'}</td> })}{filteredAssignments.length > 0 && <td className="border-l px-4 py-3 text-center font-bold text-indigo-700 bg-indigo-50/50">{total}/{max}</td>}</tr>)
+                                })}
+                            </tbody></table></div>
+                        ) : (<div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-dashed">กรุณาเลือกห้องเรียนที่มีนักเรียน</div>)}
                      </div>
                   )}
 
-                  {/* --- SETTINGS TAB --- */}
                   {activeTab === 'settings' && (
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-200 animate-pop overflow-hidden flex h-[80vh]">
-                        {/* Settings Sidebar */}
                         <div className="w-64 bg-slate-50 border-r border-slate-200 p-6 flex flex-col gap-2">
                             <h3 className="font-bold text-slate-700 mb-4 px-2 uppercase tracking-wide text-sm">หมวดหมู่ตั้งค่า</h3>
-                            {[
-                                { id: 'schedule', icon: 'fa-calendar-alt', label: 'จัดการตารางสอน' },
-                                { id: 'classes', icon: 'fa-door-open', label: 'จัดการห้องเรียน' },
-                                { id: 'subjects', icon: 'fa-book', label: 'จัดการรายวิชา' },
-                                { id: 'students', icon: 'fa-users', label: 'ฐานข้อมูลนักเรียน' },
-                                { id: 'assignments', icon: 'fa-tasks', label: 'จัดการชิ้นงาน' },
-                            ].map(menu => (
-                                <button key={menu.id} onClick={() => {setSettingsMenu(menu.id); resetForms();}} 
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left font-medium transition-colors ${settingsMenu === menu.id ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-200/50'}`}>
-                                    <i className={`fas ${menu.icon} w-5`}></i> {menu.label}
-                                </button>
+                            {[{ id: 'schedule', icon: 'fa-calendar-alt', label: 'จัดการตารางสอน' }, { id: 'classes', icon: 'fa-door-open', label: 'จัดการห้องเรียน' }, { id: 'subjects', icon: 'fa-book', label: 'จัดการรายวิชา' }, { id: 'students', icon: 'fa-users', label: 'ฐานข้อมูลนักเรียน' }, { id: 'assignments', icon: 'fa-tasks', label: 'จัดการชิ้นงาน' }].map(menu => (
+                                <button key={menu.id} onClick={() => {setSettingsMenu(menu.id); resetForms();}} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left font-medium transition-colors ${settingsMenu === menu.id ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-slate-600 hover:bg-slate-200/50'}`}><i className={`fas ${menu.icon} w-5`}></i> {menu.label}</button>
                             ))}
                         </div>
-
-                        {/* Settings Content */}
                         <div className="flex-1 p-8 overflow-y-auto bg-white">
-                            
                             {settingsMenu === 'schedule' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div className="lg:col-span-1">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                            <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขคาบเรียน' : '✨ เพิ่มคาบเรียน'}</h3>
-                                            <form onSubmit={handleSaveSchedule} className="space-y-4">
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสตาราง (ห้ามซ้ำ)</label><input required value={scheduleForm.id} onChange={e=>setScheduleForm({...scheduleForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">วันในสัปดาห์</label><select required value={scheduleForm.day} onChange={e=>setScheduleForm({...scheduleForm, day: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm">{WEEK_DAYS.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div><label className="block text-xs font-medium text-slate-500 mb-1">เวลาเริ่ม</label><input type="time" required value={scheduleForm.startTime} onChange={e=>setScheduleForm({...scheduleForm, startTime: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                    <div><label className="block text-xs font-medium text-slate-500 mb-1">เวลาจบ</label><input type="time" required value={scheduleForm.endTime} onChange={e=>setScheduleForm({...scheduleForm, endTime: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                </div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">ห้องเรียน</label><select required value={scheduleForm.classId} onChange={e=>setScheduleForm({...scheduleForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกห้อง -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รายวิชา</label><select required value={scheduleForm.subjectId} onChange={e=>setScheduleForm({...scheduleForm, subjectId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกวิชา -</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-                                                <div className="flex gap-2 pt-2">
-                                                    {editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}
-                                                    <button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div className="lg:col-span-2">
-                                        <table className="w-full text-left border rounded-2xl overflow-hidden">
-                                            <thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">วัน/เวลา</th><th className="p-4 font-semibold text-slate-600 text-sm">วิชา - ห้องเรียน</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-100 bg-white">
-                                                {schedules.sort((a,b)=> WEEK_DAYS.indexOf(a.day) - WEEK_DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime)).map(s => (
-                                                    <tr key={s.id} className="hover:bg-slate-50">
-                                                        <td className="p-4 text-slate-800 text-sm font-bold">{s.day} <span className="text-slate-400 font-normal block">{s.startTime} - {s.endTime}</span></td>
-                                                        <td className="p-4 font-bold text-slate-800"><span className="text-purple-600">{subjects.find(sub=>sub.id===s.subjectId)?.name}</span> <span className="text-indigo-600 block text-xs">{classes.find(c=>c.id===s.classId)?.name}</span></td>
-                                                        <td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setScheduleForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>setSchedules(schedules.filter(x=>x.id!==s.id))} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-1"><div className="bg-slate-50 p-6 rounded-3xl border border-slate-200"><h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขคาบเรียน' : '✨ เพิ่มคาบเรียน'}</h3><form onSubmit={handleSaveSchedule} className="space-y-4"><div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสตาราง (ห้ามซ้ำ)</label><input required value={scheduleForm.id} onChange={e=>setScheduleForm({...scheduleForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">วันในสัปดาห์</label><select required value={scheduleForm.day} onChange={e=>setScheduleForm({...scheduleForm, day: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm">{WEEK_DAYS.map(d=><option key={d} value={d}>{d}</option>)}</select></div><div className="grid grid-cols-2 gap-2"><div><label className="block text-xs font-medium text-slate-500 mb-1">เวลาเริ่ม</label><input type="time" required value={scheduleForm.startTime} onChange={e=>setScheduleForm({...scheduleForm, startTime: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">เวลาจบ</label><input type="time" required value={scheduleForm.endTime} onChange={e=>setScheduleForm({...scheduleForm, endTime: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div></div><div><label className="block text-xs font-medium text-slate-500 mb-1">ห้องเรียน</label><select required value={scheduleForm.classId} onChange={e=>setScheduleForm({...scheduleForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกห้อง -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div><label className="block text-xs font-medium text-slate-500 mb-1">รายวิชา</label><select required value={scheduleForm.subjectId} onChange={e=>setScheduleForm({...scheduleForm, subjectId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกวิชา -</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div className="flex gap-2 pt-2">{editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}<button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button></div></form></div></div><div className="lg:col-span-2"><table className="w-full text-left border rounded-2xl overflow-hidden"><thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">วัน/เวลา</th><th className="p-4 font-semibold text-slate-600 text-sm">วิชา - ห้องเรียน</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-100 bg-white">{schedules.sort((a,b)=> WEEK_DAYS.indexOf(a.day) - WEEK_DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime)).map(s => (<tr key={s.id} className="hover:bg-slate-50"><td className="p-4 text-slate-800 text-sm font-bold">{s.day} <span className="text-slate-400 font-normal block">{s.startTime} - {s.endTime}</span></td><td className="p-4 font-bold text-slate-800"><span className="text-purple-600">{subjects.find(sub=>sub.id===s.subjectId)?.name}</span> <span className="text-indigo-600 block text-xs">{classes.find(c=>c.id===s.classId)?.name}</span></td><td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setScheduleForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>handleDeleteSchedule(s.id)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>))}</tbody></table></div></div>
                             )}
-
                             {settingsMenu === 'classes' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div className="lg:col-span-1">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                            <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขห้องเรียน' : '✨ เพิ่มห้องเรียนใหม่'}</h3>
-                                            <form onSubmit={handleSaveClass} className="space-y-4">
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสห้องเรียน</label><input required value={classForm.id} onChange={e=>setClassForm({...classForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อห้องเรียน</label><input required value={classForm.name} onChange={e=>setClassForm({...classForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div className="flex gap-2 pt-2">
-                                                    {editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}
-                                                    <button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div className="lg:col-span-2">
-                                        <table className="w-full text-left border rounded-2xl overflow-hidden">
-                                            <thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">รหัสห้อง</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อห้องเรียน</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-100 bg-white">
-                                                {classes.map(c => <tr key={c.id} className="hover:bg-slate-50"><td className="p-4 text-slate-500 font-mono text-sm">{c.id}</td><td className="p-4 font-bold text-slate-800">{c.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(c); setClassForm(c);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>setClasses(classes.filter(x=>x.id!==c.id))} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>)}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-1"><div className="bg-slate-50 p-6 rounded-3xl border border-slate-200"><h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขห้องเรียน' : '✨ เพิ่มห้องเรียนใหม่'}</h3><form onSubmit={handleSaveClass} className="space-y-4"><div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสห้องเรียน</label><input required value={classForm.id} onChange={e=>setClassForm({...classForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อห้องเรียน</label><input required value={classForm.name} onChange={e=>setClassForm({...classForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div className="flex gap-2 pt-2">{editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}<button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button></div></form></div></div><div className="lg:col-span-2"><table className="w-full text-left border rounded-2xl overflow-hidden"><thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">รหัสห้อง</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อห้องเรียน</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-100 bg-white">{classes.map(c => <tr key={c.id} className="hover:bg-slate-50"><td className="p-4 text-slate-500 font-mono text-sm">{c.id}</td><td className="p-4 font-bold text-slate-800">{c.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(c); setClassForm(c);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>handleDeleteClass(c.id)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>)}</tbody></table></div></div>
                             )}
-
                             {settingsMenu === 'subjects' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div className="lg:col-span-1">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                            <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขวิชา' : '✨ เพิ่มรายวิชาใหม่'}</h3>
-                                            <form onSubmit={handleSaveSubject} className="space-y-4">
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสวิชา</label><input required value={subjectForm.id} onChange={e=>setSubjectForm({...subjectForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อวิชา</label><input required value={subjectForm.name} onChange={e=>setSubjectForm({...subjectForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div className="flex gap-2 pt-2">
-                                                    {editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}
-                                                    <button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div className="lg:col-span-2">
-                                        <table className="w-full text-left border rounded-2xl overflow-hidden">
-                                            <thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">รหัสวิชา</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อรายวิชา</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-100 bg-white">
-                                                {subjects.map(s => <tr key={s.id} className="hover:bg-slate-50"><td className="p-4 text-slate-500 font-mono text-sm">{s.id}</td><td className="p-4 font-bold text-slate-800">{s.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setSubjectForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>setSubjects(subjects.filter(x=>x.id!==s.id))} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>)}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"><div className="lg:col-span-1"><div className="bg-slate-50 p-6 rounded-3xl border border-slate-200"><h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขวิชา' : '✨ เพิ่มรายวิชาใหม่'}</h3><form onSubmit={handleSaveSubject} className="space-y-4"><div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสวิชา</label><input required value={subjectForm.id} onChange={e=>setSubjectForm({...subjectForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อวิชา</label><input required value={subjectForm.name} onChange={e=>setSubjectForm({...subjectForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div className="flex gap-2 pt-2">{editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}<button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button></div></form></div></div><div className="lg:col-span-2"><table className="w-full text-left border rounded-2xl overflow-hidden"><thead className="bg-slate-100"><tr><th className="p-4 font-semibold text-slate-600 text-sm">รหัสวิชา</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อรายวิชา</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-100 bg-white">{subjects.map(s => <tr key={s.id} className="hover:bg-slate-50"><td className="p-4 text-slate-500 font-mono text-sm">{s.id}</td><td className="p-4 font-bold text-slate-800">{s.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setSubjectForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>handleDeleteSubject(s.id)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>)}</tbody></table></div></div>
                             )}
-
                             {settingsMenu === 'students' && (
-                                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                                    <div className="xl:col-span-1">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                            <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขนักเรียน' : '✨ เพิ่มนักเรียนใหม่'}</h3>
-                                            <form onSubmit={handleSaveStudent} className="space-y-4">
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">สังกัดห้องเรียน</label><select required value={studentForm.classId} onChange={e=>setStudentForm({...studentForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกห้อง -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสนักเรียน (บาร์โค้ด)</label><input required placeholder="เช่น STD001" value={studentForm.id} onChange={e=>setStudentForm({...studentForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm uppercase"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">เลขที่</label><input required type="number" placeholder="เช่น 1" value={studentForm.number} onChange={e=>setStudentForm({...studentForm, number: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อ - นามสกุล</label><input required placeholder="เช่น ด.ช. ใจดี" value={studentForm.name} onChange={e=>setStudentForm({...studentForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div className="flex gap-2 pt-2">
-                                                    {editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}
-                                                    <button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div className="xl:col-span-3 h-full max-h-[65vh] overflow-y-auto border rounded-2xl bg-white shadow-sm">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-100 sticky top-0 z-10"><tr><th className="p-4 font-semibold text-slate-600 text-sm">ห้อง</th><th className="p-4 font-semibold text-slate-600 text-sm text-center">เลขที่</th><th className="p-4 font-semibold text-slate-600 text-sm">รหัสสแกน</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อ-นามสกุล</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {students.sort((a,b) => { if(a.classId === b.classId) return a.number - b.number; return a.classId.localeCompare(b.classId); }).map(s => (
-                                                    <tr key={s.id} className="hover:bg-slate-50"><td className="p-4 text-indigo-600 font-bold text-sm">{classes.find(c=>c.id===s.classId)?.name}</td><td className="p-4 text-center font-medium">{s.number}</td><td className="p-4 text-slate-400 font-mono text-xs">{s.id}</td><td className="p-4 font-bold text-slate-800 flex items-center gap-3"><img src={s.image} className="w-8 h-8 rounded-full border bg-slate-50" /> {s.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setStudentForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>setStudents(students.filter(x=>x.id!==s.id))} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8"><div className="xl:col-span-1"><div className="bg-slate-50 p-6 rounded-3xl border border-slate-200"><h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขนักเรียน' : '✨ เพิ่มนักเรียนใหม่'}</h3><form onSubmit={handleSaveStudent} className="space-y-4"><div><label className="block text-xs font-medium text-slate-500 mb-1">สังกัดห้องเรียน</label><select required value={studentForm.classId} onChange={e=>setStudentForm({...studentForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือกห้อง -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสนักเรียน</label><input required placeholder="เช่น STD001" value={studentForm.id} onChange={e=>setStudentForm({...studentForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm uppercase"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">เลขที่</label><input required type="number" placeholder="เช่น 1" value={studentForm.number} onChange={e=>setStudentForm({...studentForm, number: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อ - นามสกุล</label><input required placeholder="เช่น ด.ช. ใจดี" value={studentForm.name} onChange={e=>setStudentForm({...studentForm, name: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div className="flex gap-2 pt-2">{editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}<button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button></div></form></div></div><div className="xl:col-span-3 h-full max-h-[65vh] overflow-y-auto border rounded-2xl bg-white shadow-sm"><table className="w-full text-left"><thead className="bg-slate-100 sticky top-0 z-10"><tr><th className="p-4 font-semibold text-slate-600 text-sm">ห้อง</th><th className="p-4 font-semibold text-slate-600 text-sm text-center">เลขที่</th><th className="p-4 font-semibold text-slate-600 text-sm">รหัสสแกน</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อ-นามสกุล</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-100">{students.sort((a,b) => { if(a.classId === b.classId) return a.number - b.number; return a.classId.localeCompare(b.classId); }).map(s => (<tr key={s.id} className="hover:bg-slate-50"><td className="p-4 text-indigo-600 font-bold text-sm">{classes.find(c=>c.id===s.classId)?.name}</td><td className="p-4 text-center font-medium">{s.number}</td><td className="p-4 text-slate-400 font-mono text-xs">{s.id}</td><td className="p-4 font-bold text-slate-800 flex items-center gap-3"><img src={s.image} className="w-8 h-8 rounded-full border bg-slate-50" /> {s.name}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(s); setStudentForm(s);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>handleDeleteStudent(s.id)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>))}</tbody></table></div></div>
                             )}
-
                             {settingsMenu === 'assignments' && (
-                                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                                    <div className="xl:col-span-1">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                            <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขชิ้นงาน' : '✨ เพิ่มชิ้นงานใหม่'}</h3>
-                                            <form onSubmit={handleSaveAssign} className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div><label className="block text-xs font-medium text-slate-500 mb-1">สำหรับห้อง</label><select required value={assignForm.classId} onChange={e=>setAssignForm({...assignForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือก -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-                                                    <div><label className="block text-xs font-medium text-slate-500 mb-1">วิชา</label><select required value={assignForm.subjectId} onChange={e=>setAssignForm({...assignForm, subjectId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือก -</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-                                                </div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสงาน</label><input required placeholder="เช่น HW01" value={assignForm.id} onChange={e=>setAssignForm({...assignForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อชิ้นงาน</label><input required placeholder="เช่น แบบฝึกหัดบทที่ 1" value={assignForm.title} onChange={e=>setAssignForm({...assignForm, title: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div><label className="block text-xs font-medium text-slate-500 mb-1">คะแนนเต็ม</label><input required type="number" placeholder="เช่น 10" value={assignForm.maxScore} onChange={e=>setAssignForm({...assignForm, maxScore: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div>
-                                                <div className="flex gap-2 pt-2">
-                                                    {editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}
-                                                    <button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div className="xl:col-span-3 h-full max-h-[65vh] overflow-y-auto border rounded-2xl bg-white shadow-sm">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-100 sticky top-0 z-10"><tr><th className="p-4 font-semibold text-slate-600 text-sm">ห้อง/วิชา</th><th className="p-4 font-semibold text-slate-600 text-sm">รหัสงาน</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อชิ้นงาน</th><th className="p-4 font-semibold text-slate-600 text-sm text-center">คะแนนเต็ม</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {assignments.sort((a,b) => a.classId.localeCompare(b.classId)).map(a => (
-                                                    <tr key={a.id} className="hover:bg-slate-50">
-                                                        <td className="p-4 text-xs font-bold"><div className="text-indigo-600">{classes.find(c=>c.id===a.classId)?.name}</div><div className="text-purple-600">{subjects.find(s=>s.id===a.subjectId)?.name}</div></td>
-                                                        <td className="p-4 text-slate-400 font-mono text-xs">{a.id}</td>
-                                                        <td className="p-4 font-bold text-slate-800">{a.title}</td>
-                                                        <td className="p-4 text-center font-bold text-sky-600">{a.maxScore}</td>
-                                                        <td className="p-4 text-right"><button onClick={()=>{setEditItem(a); setAssignForm(a);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>setAssignments(assignments.filter(x=>x.id!==a.id))} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8"><div className="xl:col-span-1"><div className="bg-slate-50 p-6 rounded-3xl border border-slate-200"><h3 className="font-bold mb-4 flex items-center gap-2 text-slate-800">{editItem ? '✏️ แก้ไขชิ้นงาน' : '✨ เพิ่มชิ้นงานใหม่'}</h3><form onSubmit={handleSaveAssign} className="space-y-4"><div className="grid grid-cols-2 gap-2"><div><label className="block text-xs font-medium text-slate-500 mb-1">สำหรับห้อง</label><select required value={assignForm.classId} onChange={e=>setAssignForm({...assignForm, classId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือก -</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div><label className="block text-xs font-medium text-slate-500 mb-1">วิชา</label><select required value={assignForm.subjectId} onChange={e=>setAssignForm({...assignForm, subjectId: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"><option value="">- เลือก -</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div></div><div><label className="block text-xs font-medium text-slate-500 mb-1">รหัสงาน</label><input required placeholder="เช่น HW01" value={assignForm.id} onChange={e=>setAssignForm({...assignForm, id: e.target.value})} disabled={editItem} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">ชื่อชิ้นงาน</label><input required placeholder="เช่น แบบฝึกหัด" value={assignForm.title} onChange={e=>setAssignForm({...assignForm, title: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div><label className="block text-xs font-medium text-slate-500 mb-1">คะแนนเต็ม</label><input required type="number" placeholder="เช่น 10" value={assignForm.maxScore} onChange={e=>setAssignForm({...assignForm, maxScore: e.target.value})} className="w-full p-3 bg-white border rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none text-sm"/></div><div className="flex gap-2 pt-2">{editItem && <button type="button" onClick={resetForms} className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold">ยกเลิก</button>}<button type="submit" className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">บันทึก</button></div></form></div></div><div className="xl:col-span-3 h-full max-h-[65vh] overflow-y-auto border rounded-2xl bg-white shadow-sm"><table className="w-full text-left"><thead className="bg-slate-100 sticky top-0 z-10"><tr><th className="p-4 font-semibold text-slate-600 text-sm">ห้อง/วิชา</th><th className="p-4 font-semibold text-slate-600 text-sm">รหัสงาน</th><th className="p-4 font-semibold text-slate-600 text-sm">ชื่อชิ้นงาน</th><th className="p-4 font-semibold text-slate-600 text-sm text-center">คะแนนเต็ม</th><th className="p-4 font-semibold text-slate-600 text-sm text-right">จัดการ</th></tr></thead><tbody className="divide-y divide-slate-100">{assignments.sort((a,b) => a.classId.localeCompare(b.classId)).map(a => (<tr key={a.id} className="hover:bg-slate-50"><td className="p-4 text-xs font-bold"><div className="text-indigo-600">{classes.find(c=>c.id===a.classId)?.name}</div><div className="text-purple-600">{subjects.find(s=>s.id===a.subjectId)?.name}</div></td><td className="p-4 text-slate-400 font-mono text-xs">{a.id}</td><td className="p-4 font-bold text-slate-800">{a.title}</td><td className="p-4 text-center font-bold text-sky-600">{a.maxScore}</td><td className="p-4 text-right"><button onClick={()=>{setEditItem(a); setAssignForm(a);}} className="text-indigo-600 hover:text-indigo-800 text-sm font-bold mr-4">แก้ไข</button><button onClick={()=>handleDeleteAssign(a.id)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">ลบ</button></td></tr>))}</tbody></table></div></div>
                             )}
                         </div>
                     </div>
@@ -726,111 +534,41 @@
 
                   {['attendance', 'behavior', 'assignment'].includes(activeTab) && (
                     <div className="max-w-6xl mx-auto space-y-6 animate-pop">
-                      
-                      {/* Scanner Input Header */}
                       <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row gap-6 items-center justify-between relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-                        
-                        <div className="relative z-10 w-full md:w-auto">
-                          <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
-                            {activeTab === 'attendance' && '✅ โหมดเช็คชื่อเข้าเรียน'}
-                            {activeTab === 'behavior' && '🌟 โหมดจิตพิสัย'}
-                            {activeTab === 'assignment' && '🎯 โหมดตรวจงาน'}
-                          </h2>
-                          <p className="text-slate-500 mt-2 text-sm font-medium">
-                            ใช้เครื่องสแกนบาร์โค้ด หรือ 👆 คลิ๊กที่การ์ดนักเรียนด้านล่างเพื่อดำเนินการ
-                          </p>
-                        </div>
-
-                        <form onSubmit={handleScanSubmit} className="relative w-full md:w-96 z-10">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none">
-                            <i className="fas fa-barcode text-xl text-indigo-400"></i>
-                          </div>
-                          <input ref={scannerInputRef} type="text" 
-                            className="bg-slate-50 border-2 border-indigo-100 text-slate-900 text-lg rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 block w-full pl-14 pr-5 py-4 outline-none transition-all uppercase placeholder-slate-400 font-mono shadow-inner"
-                            placeholder="ยิงบาร์โค้ดที่นี่..." value={barcodeInput} onChange={(e) => setBarcodeInput(e.target.value)} autoComplete="off" />
-                        </form>
+                        <div className="relative z-10 w-full md:w-auto"><h2 className="text-2xl md:text-3xl font-bold text-slate-800">{activeTab === 'attendance' && '✅ โหมดเช็คชื่อเข้าเรียน'}{activeTab === 'behavior' && '🌟 โหมดจิตพิสัย'}{activeTab === 'assignment' && '🎯 โหมดตรวจงาน'}</h2><p className="text-slate-500 mt-2 text-sm font-medium">ใช้เครื่องสแกนบาร์โค้ด หรือ 👆 คลิ๊กที่การ์ดนักเรียนด้านล่างเพื่อดำเนินการ</p></div>
+                        <form onSubmit={handleScanSubmit} className="relative w-full md:w-96 z-10"><div className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none"><i className="fas fa-barcode text-xl text-indigo-400"></i></div><input ref={scannerInputRef} type="text" className="bg-slate-50 border-2 border-indigo-100 text-slate-900 text-lg rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 block w-full pl-14 pr-5 py-4 outline-none transition-all uppercase placeholder-slate-400 font-mono shadow-inner" placeholder="ยิงบาร์โค้ดที่นี่..." value={barcodeInput} onChange={(e) => setBarcodeInput(e.target.value)} autoComplete="off" /></form>
                       </div>
 
-                      {/* Feedback Banner */}
                       {lastScanned && !gradingModal.isOpen && !behaviorModal.isOpen && (
-                        <div className={`p-5 rounded-2xl flex items-center gap-5 shadow-md border animate-pop ${lastScanned.type === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm ${lastScanned.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                            <i className={`fas ${lastScanned.type === 'success' ? 'fa-check' : 'fa-times'}`}></i>
-                          </div>
-                          <div>
-                            <p className="font-bold text-lg text-slate-800">{lastScanned.message}</p>
-                            {lastScanned.student && <p className="text-sm text-slate-600 font-medium">{lastScanned.student.name} ({lastScanned.student.id})</p>}
-                          </div>
-                        </div>
+                        <div className={`p-5 rounded-2xl flex items-center gap-5 shadow-md border animate-pop ${lastScanned.type === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}><div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm ${lastScanned.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}><i className={`fas ${lastScanned.type === 'success' ? 'fa-check' : 'fa-times'}`}></i></div><div><p className="font-bold text-lg text-slate-800">{lastScanned.message}</p>{lastScanned.student && <p className="text-sm text-slate-600 font-medium">{lastScanned.student.name} ({lastScanned.student.id})</p>}</div></div>
                       )}
 
-                      {/* Students Grid */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 pb-20">
                         {filteredStudents.sort((a,b)=>a.number - b.number).map(student => {
                           const attendanceKey = `${student.id}_${currentSubjectId}`;
                           const isPresent = attendanceData[attendanceKey]?.status === 'present';
                           const behaviorPoints = getBehaviorScore(student.id);
-                          
-                          let missingCount = 0;
-                          if (activeTab === 'assignment') {
-                            filteredAssignments.forEach(a => { if (!assignmentData[a.id]?.[student.id]) missingCount++; });
-                          }
+                          let missingCount = 0; if (activeTab === 'assignment') { filteredAssignments.forEach(a => { if (!assignmentData[a.id]?.[student.id]) missingCount++; }); }
 
                           return (
-                            <div key={student.id} 
-                              onClick={() => {
-                                if(activeTab === 'assignment') {
-                                  const currentScores = {};
-                                  filteredAssignments.forEach(a => { currentScores[a.id] = assignmentData[a.id]?.[student.id] ? assignmentData[a.id][student.id].score : ''; });
-                                  setModalScores(currentScores); setGradingModal({ isOpen: true, student });
-                                } else if(activeTab === 'behavior') {
-                                  setBehaviorModal({ isOpen: true, student });
-                                } else {
-                                  const timeString = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                                  setAttendanceData(prev => ({ ...prev, [attendanceKey]: isPresent ? undefined : { status: 'present', time: timeString } }));
-                                }
+                            <div key={student.id} onClick={() => {
+                                if(activeTab === 'assignment') { const currentScores = {}; filteredAssignments.forEach(a => { currentScores[a.id] = assignmentData[a.id]?.[student.id] ? assignmentData[a.id][student.id].score : ''; }); setModalScores(currentScores); setGradingModal({ isOpen: true, student }); } 
+                                else if(activeTab === 'behavior') { setBehaviorModal({ isOpen: true, student }); } 
+                                else { const timeString = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); const newAtt = { ...attendanceData }; if (isPresent) delete newAtt[attendanceKey]; else newAtt[attendanceKey] = { status: 'present', time: timeString }; setAttendanceData(newAtt); syncRecords({ attendanceData: newAtt }); }
                               }}
-                              className={`group relative bg-white p-5 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl ${isPresent && activeTab === 'attendance' ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-100 hover:border-indigo-300'}`}
-                            >
+                              className={`group relative bg-white p-5 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl ${isPresent && activeTab === 'attendance' ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-100 hover:border-indigo-300'}`}>
                               <div className="flex flex-col items-center text-center">
-                                {/* Profile Pic with Status Rings */}
-                                <div className="relative mb-3">
-                                  <div className={`w-16 h-16 rounded-full p-1 transition-colors ${isPresent && activeTab === 'attendance' ? 'bg-emerald-400' : 'bg-slate-200 group-hover:bg-indigo-300'}`}>
-                                      <img src={student.image} className="w-full h-full rounded-full bg-white object-cover" />
-                                  </div>
-                                  
-                                  {/* Badges depending on mode */}
-                                  {activeTab === 'behavior' && behaviorPoints !== 0 && (
-                                      <div className={`absolute -top-2 -right-2 font-bold text-white text-xs w-7 h-7 flex items-center justify-center rounded-full border-2 border-white shadow-sm ${behaviorPoints > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}>
-                                          {behaviorPoints > 0 ? '+' : ''}{behaviorPoints}
-                                      </div>
-                                  )}
-                                  {activeTab === 'attendance' && isPresent && (
-                                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white"><i className="fas fa-check text-[10px]"></i></div>
-                                  )}
+                                <div className="relative mb-3"><div className={`w-16 h-16 rounded-full p-1 transition-colors ${isPresent && activeTab === 'attendance' ? 'bg-emerald-400' : 'bg-slate-200 group-hover:bg-indigo-300'}`}><img src={student.image} className="w-full h-full rounded-full bg-white object-cover" /></div>
+                                  {activeTab === 'behavior' && behaviorPoints !== 0 && (<div className={`absolute -top-2 -right-2 font-bold text-white text-xs w-7 h-7 flex items-center justify-center rounded-full border-2 border-white shadow-sm ${behaviorPoints > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}>{behaviorPoints > 0 ? '+' : ''}{behaviorPoints}</div>)}
+                                  {activeTab === 'attendance' && isPresent && (<div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white"><i className="fas fa-check text-[10px]"></i></div>)}
                                 </div>
-
                                 <div className="font-bold text-slate-800 text-sm leading-tight truncate w-full">{student.name.split(' ')[1]}</div>
                                 <div className="text-[11px] text-slate-400 mt-1 font-mono bg-slate-100 px-2 py-0.5 rounded-md">เลขที่ {student.number}</div>
-                                
-                                {/* Status Tags */}
                                 <div className="mt-3 w-full">
-                                    {activeTab === 'attendance' && (
-                                        <div className={`text-xs font-bold py-1.5 rounded-xl w-full ${isPresent ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {isPresent ? attendanceData[attendanceKey].time : 'รอเช็คชื่อ'}
-                                        </div>
-                                    )}
-                                    {activeTab === 'behavior' && (
-                                        <div className="text-xs font-bold py-1.5 rounded-xl w-full bg-amber-50 text-amber-700 border border-amber-100 shadow-sm">
-                                            ให้คะแนน 🌟
-                                        </div>
-                                    )}
-                                    {activeTab === 'assignment' && (
-                                        <div className={`text-xs font-bold py-1.5 rounded-xl w-full flex items-center justify-center gap-1 ${missingCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-sky-100 text-sky-700'}`}>
-                                            {missingCount > 0 ? <><i className="fas fa-circle text-[8px]"></i> ค้าง {missingCount} งาน</> : <><i className="fas fa-check-circle"></i> ครบถ้วน</>}
-                                        </div>
-                                    )}
+                                    {activeTab === 'attendance' && (<div className={`text-xs font-bold py-1.5 rounded-xl w-full ${isPresent ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{isPresent ? attendanceData[attendanceKey].time : 'รอเช็คชื่อ'}</div>)}
+                                    {activeTab === 'behavior' && (<div className="text-xs font-bold py-1.5 rounded-xl w-full bg-amber-50 text-amber-700 border border-amber-100 shadow-sm">ให้คะแนน 🌟</div>)}
+                                    {activeTab === 'assignment' && (<div className={`text-xs font-bold py-1.5 rounded-xl w-full flex items-center justify-center gap-1 ${missingCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-sky-100 text-sky-700'}`}>{missingCount > 0 ? <><i className="fas fa-circle text-[8px]"></i> ค้าง {missingCount} งาน</> : <><i className="fas fa-check-circle"></i> ครบถ้วน</>}</div>)}
                                 </div>
                               </div>
                             </div>
@@ -841,115 +579,44 @@
                   )}
                 </main>
 
-                {/* 1. Behavior Modal */}
+                {/* Modals (Behavior, Grading, Randomizer) */}
                 {behaviorModal.isOpen && behaviorModal.student && (
                   <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-pop">
-                      <div className="bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-white text-center relative">
-                        <img src={behaviorModal.student.image} className="w-20 h-20 rounded-full border-4 border-white shadow-md mx-auto mb-3 bg-white" />
-                        <h3 className="text-2xl font-bold">{behaviorModal.student.name}</h3>
-                        <p className="text-orange-100 font-medium text-sm mt-1">คะแนนปัจจุบัน: {getBehaviorScore(behaviorModal.student.id)} แต้ม</p>
-                      </div>
-                      
-                      <div className="p-8 bg-slate-50">
-                        <h4 className="text-center font-bold text-slate-600 mb-5">เลือกพฤติกรรมด่วน</h4>
-                        <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-white text-center relative"><img src={behaviorModal.student.image} className="w-20 h-20 rounded-full border-4 border-white shadow-md mx-auto mb-3 bg-white" /><h3 className="text-2xl font-bold">{behaviorModal.student.name}</h3><p className="text-orange-100 font-medium text-sm mt-1">คะแนนปัจจุบัน: {getBehaviorScore(behaviorModal.student.id)} แต้ม</p></div>
+                      <div className="p-8 bg-slate-50"><h4 className="text-center font-bold text-slate-600 mb-5">เลือกพฤติกรรมด่วน</h4><div className="grid grid-cols-2 gap-3">
                             {BEHAVIOR_PRESETS.map((preset, idx) => (
-                                <button key={idx} onClick={() => handleAddBehavior(preset.points, preset.reason)}
-                                    className={`p-3 rounded-2xl font-bold text-sm flex items-center gap-3 transition-transform hover:scale-105 shadow-sm border ${preset.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`}>
-                                    <span className="text-2xl">{preset.icon}</span>
-                                    <div className="text-left leading-tight">
-                                        <div>{preset.reason}</div>
-                                        <div className={`text-xs mt-0.5 ${preset.color === 'green' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                            {preset.points > 0 ? '+'+preset.points : preset.points} แต้ม
-                                        </div>
-                                    </div>
-                                </button>
+                                <button key={idx} onClick={() => handleAddBehavior(preset.points, preset.reason)} className={`p-3 rounded-2xl font-bold text-sm flex items-center gap-3 transition-transform hover:scale-105 shadow-sm border ${preset.color === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`}><span className="text-2xl">{preset.icon}</span><div className="text-left leading-tight"><div>{preset.reason}</div><div className={`text-xs mt-0.5 ${preset.color === 'green' ? 'text-emerald-500' : 'text-rose-500'}`}>{preset.points > 0 ? '+'+preset.points : preset.points} แต้ม</div></div></button>
                             ))}
-                        </div>
-                      </div>
-                      <div className="p-4 bg-white border-t flex justify-center">
-                        <button onClick={() => setBehaviorModal({ isOpen: false, student: null })} className="px-8 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-colors">ยกเลิก</button>
-                      </div>
+                        </div></div>
+                      <div className="p-4 bg-white border-t flex justify-center"><button onClick={() => setBehaviorModal({ isOpen: false, student: null })} className="px-8 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200">ยกเลิก</button></div>
                     </div>
                   </div>
                 )}
 
-                {/* 2. Grading Modal */}
                 {gradingModal.isOpen && gradingModal.student && (
                   <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-pop flex flex-col max-h-[90vh]">
-                      <div className="bg-gradient-to-r from-sky-500 to-indigo-500 p-6 text-white flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                          <img src={gradingModal.student.image} className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-white" />
-                          <div>
-                            <h3 className="text-2xl font-bold">{gradingModal.student.name}</h3>
-                            <p className="text-sky-100 font-medium text-sm">รหัส: {gradingModal.student.id} | เลขที่ {gradingModal.student.number}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="p-6 overflow-y-auto bg-slate-50 flex-1">
-                        <div className="space-y-4">
+                      <div className="bg-gradient-to-r from-sky-500 to-indigo-500 p-6 text-white flex items-center justify-between"><div className="flex items-center gap-5"><img src={gradingModal.student.image} className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-white" /><div><h3 className="text-2xl font-bold">{gradingModal.student.name}</h3><p className="text-sky-100 font-medium text-sm">รหัส: {gradingModal.student.id} | เลขที่ {gradingModal.student.number}</p></div></div></div>
+                      <div className="p-6 overflow-y-auto bg-slate-50 flex-1"><div className="space-y-4">
                           {filteredAssignments.map((assignment, idx) => {
                             const isMissing = modalScores[assignment.id] === '' || modalScores[assignment.id] === undefined;
-                            return (
-                              <div key={assignment.id} className={`p-5 rounded-3xl border-2 flex items-center justify-between transition-colors bg-white ${isMissing ? 'border-rose-200' : 'border-emerald-200'}`}>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3">
-                                    <span className="font-bold text-slate-800 text-lg">{assignment.title}</span>
-                                    {isMissing && <span className="px-3 py-1 text-xs bg-rose-100 text-rose-700 rounded-full font-bold">ค้างส่ง 🚨</span>}
-                                  </div>
-                                  <p className="text-sm text-slate-500 mt-1">คะแนนเต็ม {assignment.maxScore}</p>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-                                  <input autoFocus={idx === 0} type="number" min="0" max={assignment.maxScore} step="0.5"
-                                    className={`w-24 text-center text-xl py-2 rounded-xl focus:ring-4 focus:outline-none font-bold transition-all ${isMissing ? 'bg-white border-2 border-slate-200 focus:border-sky-500 focus:ring-sky-100' : 'bg-emerald-50 border-2 border-emerald-400 text-emerald-700 focus:border-emerald-600 focus:ring-emerald-200'}`}
-                                    value={modalScores[assignment.id]} onChange={(e) => setModalScores({...modalScores, [assignment.id]: e.target.value})} placeholder="-" />
-                                </div>
-                              </div>
-                            );
+                            return (<div key={assignment.id} className={`p-5 rounded-3xl border-2 flex items-center justify-between transition-colors bg-white ${isMissing ? 'border-rose-200' : 'border-emerald-200'}`}><div className="flex-1"><div className="flex items-center gap-3"><span className="font-bold text-slate-800 text-lg">{assignment.title}</span>{isMissing && <span className="px-3 py-1 text-xs bg-rose-100 text-rose-700 rounded-full font-bold">ค้างส่ง 🚨</span>}</div><p className="text-sm text-slate-500 mt-1">คะแนนเต็ม {assignment.maxScore}</p></div><div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-100"><input autoFocus={idx === 0} type="number" min="0" max={assignment.maxScore} step="0.5" className={`w-24 text-center text-xl py-2 rounded-xl focus:ring-4 focus:outline-none font-bold transition-all ${isMissing ? 'bg-white border-2 border-slate-200 focus:border-sky-500 focus:ring-sky-100' : 'bg-emerald-50 border-2 border-emerald-400 text-emerald-700 focus:border-emerald-600 focus:ring-emerald-200'}`} value={modalScores[assignment.id]} onChange={(e) => setModalScores({...modalScores, [assignment.id]: e.target.value})} placeholder="-" /></div></div>);
                           })}
                           {filteredAssignments.length === 0 && <div className="text-center py-10 text-slate-400 font-medium">ไม่มีชิ้นงาน 📝</div>}
-                        </div>
-                      </div>
-
-                      <div className="p-5 bg-white border-t flex justify-end gap-3">
-                        <button onClick={() => setGradingModal({ isOpen: false, student: null })} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200">ยกเลิก</button>
-                        <button onClick={handleSaveGrading} className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-md shadow-indigo-200 flex items-center gap-2">บันทึกคะแนน ✨</button>
-                      </div>
+                        </div></div>
+                      <div className="p-5 bg-white border-t flex justify-end gap-3"><button onClick={() => setGradingModal({ isOpen: false, student: null })} className="px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200">ยกเลิก</button><button onClick={handleSaveGrading} className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-md flex items-center gap-2">บันทึกคะแนน ✨</button></div>
                     </div>
                   </div>
                 )}
 
-                {/* 3. Randomizer Modal */}
                 {randomizerModal.isOpen && (
                   <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-md p-10 text-center animate-pop relative overflow-hidden">
-                       {/* Confetti effect background if not spinning */}
-                       {!randomizerModal.spinning && (
-                          <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==')]"></div>
-                       )}
-                       
+                       {!randomizerModal.spinning && (<div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==')]"></div>)}
                        <h3 className="text-2xl font-bold text-slate-800 mb-8">{randomizerModal.spinning ? '🎲 กำลังสุ่มนักเรียน...' : '🎉 ผู้โชคดีคือ!'}</h3>
-                       
-                       {randomizerModal.result && (
-                           <div className={`transition-all duration-100 ${randomizerModal.spinning ? 'scale-95 opacity-80 blur-[1px]' : 'scale-110 opacity-100 animate-pop'}`}>
-                               <img src={randomizerModal.result.image} className={`w-32 h-32 mx-auto rounded-full shadow-xl bg-slate-100 mb-6 border-4 ${randomizerModal.spinning ? 'border-slate-200' : 'border-amber-400'}`} />
-                               <div className="text-3xl font-bold text-indigo-700">{randomizerModal.result.name}</div>
-                               <div className="text-slate-500 font-medium mt-2 bg-slate-100 inline-block px-4 py-1 rounded-full">เลขที่ {randomizerModal.result.number}</div>
-                           </div>
-                       )}
-
-                       <div className="mt-10 flex justify-center gap-3 relative z-10">
-                           {!randomizerModal.spinning && (
-                               <React.Fragment>
-                                   <button onClick={() => setRandomizerModal({isOpen:false})} className="px-6 py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200">ปิดหน้าต่าง</button>
-                                   <button onClick={startRandomizer} className="px-8 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl font-bold hover:scale-105 transition-transform shadow-lg shadow-orange-200">สุ่มอีกครั้ง 🎲</button>
-                               </React.Fragment>
-                           )}
-                       </div>
+                       {randomizerModal.result && (<div className={`transition-all duration-100 ${randomizerModal.spinning ? 'scale-95 opacity-80 blur-[1px]' : 'scale-110 opacity-100 animate-pop'}`}><img src={randomizerModal.result.image} className={`w-32 h-32 mx-auto rounded-full shadow-xl bg-slate-100 mb-6 border-4 ${randomizerModal.spinning ? 'border-slate-200' : 'border-amber-400'}`} /><div className="text-3xl font-bold text-indigo-700">{randomizerModal.result.name}</div><div className="text-slate-500 font-medium mt-2 bg-slate-100 inline-block px-4 py-1 rounded-full">เลขที่ {randomizerModal.result.number}</div></div>)}
+                       <div className="mt-10 flex justify-center gap-3 relative z-10">{!randomizerModal.spinning && (<React.Fragment><button onClick={() => setRandomizerModal({isOpen:false})} className="px-6 py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200">ปิดหน้าต่าง</button><button onClick={startRandomizer} className="px-8 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl font-bold hover:scale-105 shadow-lg">สุ่มอีกครั้ง 🎲</button></React.Fragment>)}</div>
                     </div>
                   </div>
                 )}
