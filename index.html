@@ -99,6 +99,7 @@
           const [behaviorData, setBehaviorData] = useState({});
           
           const [activeTab, setActiveTab] = useState('schedule');
+          const [reportTab, setReportTab] = useState('attendance'); // เพิ่มบรรทัดนี้: จัดการหน้าย่อยในรายงาน
           const [currentClassId, setCurrentClassId] = useState('');
           const [currentSubjectId, setCurrentSubjectId] = useState('');
           const [barcodeInput, setBarcodeInput] = useState('');
@@ -522,45 +523,75 @@
           };
           const handleDeleteSchedule = (id) => { const n = schedules.filter(x=>x.id!==id); setSchedules(n); syncCore({schedules: n}); };
 
-          // --- การส่งออกเป็นไฟล์ CSV ---
+          // หา "วันที่" ทั้งหมดที่มีการเช็คชื่อในวิชานี้และห้องนี้
+          const getAttendanceDates = () => {
+              const dates = new Set();
+              filteredStudents.forEach(s => {
+                  Object.keys(attendanceData).forEach(key => {
+                      if (key.endsWith(`_${s.id}_${currentSubjectId}`)) {
+                          dates.add(key.split('_')[0]); // ดึงเฉพาะวันที่
+                      }
+                  });
+              });
+              return Array.from(dates).sort();
+          };
+
+          // --- การส่งออกเป็นไฟล์ CSV สำรองข้อมูล ---
           const exportToCSV = () => {
               let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-              let headerRow = ["เลขที่", "ชื่อ-นามสกุล", "จำนวนคาบเข้าเรียน", "คะแนนจิตพิสัย"];
-              filteredAssignments.forEach(a => headerRow.push(a.title + " (คะแนนเต็ม " + a.maxScore + ")"));
-              headerRow.push("คะแนนรวม");
-              
-              csvContent += headerRow.join(",") + "\r\n";
-              
-              filteredStudents.sort((a,b) => a.number - b.number).forEach(s => {
-                  let row = [];
-                  row.push(s.number);
-                  row.push(`"${s.name}"`); 
-                  
-                  // นับจำนวนครั้งที่เช็คชื่อเข้าเรียนของเด็กคนนี้ ในวิชานี้ (หาจากทุกๆ วันที่มีการบันทึก)
-                  const presentCount = Object.keys(attendanceData).filter(k => k.endsWith(`_${s.id}_${currentSubjectId}`) && attendanceData[k].status === 'present').length;
-                  row.push(presentCount);
-                  
-                  const behaviorPts = getBehaviorScore(s.id);
-                  row.push(behaviorPts);
-                  
-                  let total = 0, max = 0;
-                  filteredAssignments.forEach(a => {
-                      const sc = assignmentData[a.id]?.[s.id]?.score;
-                      total += (sc || 0); max += a.maxScore;
-                      row.push(sc !== undefined ? sc : '0');
-                  });
-                  row.push(total);
-                  
-                  csvContent += row.join(",") + "\r\n";
-              });
-              
               const className = classes.find(c=>c.id===currentClassId)?.name || 'Class';
               const subjectName = subjects.find(s=>s.id===currentSubjectId)?.name || 'Subject';
+              let filename = "";
+
+              if (reportTab === 'attendance') {
+                  const dates = getAttendanceDates();
+                  let headerRow = ["เลขที่", "รหัสนักเรียน", "ชื่อ-นามสกุล"];
+                  dates.forEach(d => headerRow.push(d));
+                  headerRow.push("รวมมาเรียน (คาบ)");
+                  
+                  csvContent += headerRow.join(",") + "\r\n";
+                  
+                  filteredStudents.sort((a,b) => a.number - b.number).forEach(s => {
+                      let row = [s.number, s.id, `"${s.name}"`];
+                      let presentCount = 0;
+                      dates.forEach(d => {
+                          const isPresent = attendanceData[`${d}_${s.id}_${currentSubjectId}`]?.status === 'present';
+                          row.push(isPresent ? "1" : "0");
+                          if(isPresent) presentCount++;
+                      });
+                      row.push(presentCount);
+                      csvContent += row.join(",") + "\r\n";
+                  });
+                  filename = `ใบเช็คชื่อ_${className}_${subjectName}.csv`;
+
+              } else {
+                  let headerRow = ["เลขที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "จิตพิสัย"];
+                  filteredAssignments.forEach(a => headerRow.push(a.title + " (เต็ม " + a.maxScore + ")"));
+                  headerRow.push("คะแนนรวม");
+                  
+                  csvContent += headerRow.join(",") + "\r\n";
+                  
+                  filteredStudents.sort((a,b) => a.number - b.number).forEach(s => {
+                      let row = [s.number, s.id, `"${s.name}"`];
+                      const behaviorPts = getBehaviorScore(s.id);
+                      row.push(behaviorPts);
+                      
+                      let total = 0, max = 0;
+                      filteredAssignments.forEach(a => {
+                          const sc = assignmentData[a.id]?.[s.id]?.score;
+                          total += (sc || 0); max += a.maxScore;
+                          row.push(sc !== undefined ? sc : '0');
+                      });
+                      row.push(total);
+                      csvContent += row.join(",") + "\r\n";
+                  });
+                  filename = `สมุดคะแนน_${className}_${subjectName}.csv`;
+              }
               
               const encodedUri = encodeURI(csvContent);
               const link = document.createElement("a");
               link.setAttribute("href", encodedUri);
-              link.setAttribute("download", `รายงาน_${className}_${subjectName}.csv`);
+              link.setAttribute("download", filename);
               document.body.appendChild(link); link.click(); document.body.removeChild(link);
           };
 
@@ -766,23 +797,93 @@
                   {activeTab === 'reports' && (
                      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 animate-pop">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
-                            <div><h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3"><i className="fas fa-chart-pie text-purple-500"></i> รายงานสรุปผลรวม</h2><p className="text-slate-500 mt-1">ห้อง {classes.find(c=>c.id===currentClassId)?.name} | วิชา {subjects.find(s=>s.id===currentSubjectId)?.name}</p></div>
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button onClick={exportToCSV} className="print:hidden flex-1 md:flex-none bg-emerald-600 text-white px-5 py-2.5 rounded-2xl hover:bg-emerald-700 font-bold shadow-md flex items-center justify-center gap-2"><i className="fas fa-file-csv"></i> ส่งออกไฟล์ลง Google Sheets (CSV)</button>
-                                <button onClick={() => window.print()} className="print:hidden flex-1 md:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-2xl hover:bg-slate-900 font-bold shadow-md flex items-center justify-center gap-2"><i className="fas fa-print"></i> พิมพ์ PDF</button>
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3"><i className="fas fa-chart-pie text-purple-500"></i> รายงานสรุปผล</h2>
+                                <p className="text-slate-500 mt-1">ห้อง {classes.find(c=>c.id===currentClassId)?.name} | วิชา {subjects.find(s=>s.id===currentSubjectId)?.name}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                {/* สวิตช์สลับหน้า ใบเช็คชื่อ / สมุดคะแนน */}
+                                <div className="bg-slate-100 p-1 rounded-xl flex mr-2 print:hidden w-full md:w-auto">
+                                    <button onClick={() => setReportTab('attendance')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${reportTab === 'attendance' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>📅 ใบเรียกชื่อ</button>
+                                    <button onClick={() => setReportTab('grades')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${reportTab === 'grades' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>📝 สมุดคะแนน</button>
+                                </div>
+                                <button onClick={exportToCSV} className="print:hidden flex-1 md:flex-none bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 font-bold shadow-md flex items-center justify-center gap-2 text-sm"><i className="fas fa-file-csv"></i> ส่งออก Excel</button>
+                                <button onClick={() => window.print()} className="print:hidden flex-1 md:flex-none bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-900 font-bold shadow-md flex items-center justify-center gap-2 text-sm"><i className="fas fa-print"></i> พิมพ์ PDF</button>
                             </div>
                         </div>
+                        
                         {filteredStudents.length > 0 ? (
-                            <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full text-sm text-left"><thead className="bg-slate-50 text-slate-700"><tr><th className="border-b px-4 py-3 text-center font-semibold">เลขที่</th><th className="border-b px-4 py-3 font-semibold min-w-[200px]">ชื่อ - นามสกุล</th><th className="border-b border-l px-4 py-3 text-center font-semibold bg-emerald-50 w-24">เข้าเรียน<br/><span className="text-[10px] text-slate-500">(คาบ)</span></th><th className="border-b border-l px-4 py-3 text-center font-semibold bg-amber-50">จิตพิสัย</th>{filteredAssignments.map(a => <th key={a.id} className="border-b border-l px-4 py-3 text-center text-xs font-semibold">{a.title}<br/><span className="text-indigo-500">({a.maxScore})</span></th>)}{filteredAssignments.length > 0 && <th className="border-b border-l px-4 py-3 text-center bg-indigo-50 font-semibold">คะแนนรวม</th>}</tr></thead><tbody className="divide-y divide-slate-100">
-                                {filteredStudents.sort((a,b) => a.number - b.number).map(s => {
-                                    // เปลี่ยนเป็นนับจำนวนครั้งที่เข้าเรียน (นับจากทุกวันที่บันทึก)
-                                    const presentCount = Object.keys(attendanceData).filter(k => k.endsWith(`_${s.id}_${currentSubjectId}`) && attendanceData[k].status === 'present').length;
-                                    const behaviorPts = getBehaviorScore(s.id); 
-                                    let total = 0, max = 0;
-                                    return (<tr key={s.id} className="hover:bg-slate-50"><td className="px-4 py-3 text-center text-slate-500">{s.number}</td><td className="px-4 py-3 font-medium text-slate-800">{s.name}</td><td className="border-l px-4 py-3 text-center bg-emerald-50/30 font-bold text-emerald-700">{presentCount > 0 ? presentCount : '-'}</td><td className={`border-l px-4 py-3 text-center font-bold ${behaviorPts > 0 ? 'text-emerald-600' : behaviorPts < 0 ? 'text-rose-600' : 'text-slate-400'}`}>{behaviorPts !== 0 ? behaviorPts : '-'}</td>{filteredAssignments.map(a => { const sc = assignmentData[a.id]?.[s.id]?.score; total += (sc || 0); max += a.maxScore; return <td key={a.id} className="border-l px-4 py-3 text-center text-slate-600">{sc !== undefined ? sc : '-'}</td> })}{filteredAssignments.length > 0 && <td className="border-l px-4 py-3 text-center font-bold text-indigo-700 bg-indigo-50/50">{total}/{max}</td>}</tr>)
-                                })}
-                            </tbody></table></div>
-                        ) : (<div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-dashed">กรุณาเลือกห้องเรียนที่มีนักเรียน</div>)}
+                            <div className="overflow-x-auto rounded-xl border border-slate-200">
+                                {reportTab === 'attendance' ? (
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 text-slate-700">
+                                            <tr>
+                                                <th className="border-b px-4 py-3 text-center font-semibold w-16">เลขที่</th>
+                                                <th className="border-b px-4 py-3 font-semibold min-w-[200px]">ชื่อ - นามสกุล</th>
+                                                {getAttendanceDates().map(date => {
+                                                    const [y, m, d] = date.split('-');
+                                                    return <th key={date} className="border-b border-l px-2 py-3 text-center text-xs font-semibold bg-emerald-50/50 whitespace-nowrap">{d}/{m}<br/><span className="text-[9px] font-normal text-slate-400">{y}</span></th>
+                                                })}
+                                                <th className="border-b border-l px-4 py-3 text-center font-semibold bg-indigo-50 w-24">รวมมาเรียน<br/><span className="text-[10px] font-normal text-slate-500">(คาบ)</span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredStudents.sort((a,b) => a.number - b.number).map(s => {
+                                                const dates = getAttendanceDates();
+                                                let presentCount = 0;
+                                                return (
+                                                    <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3 text-center text-slate-500">{s.number}</td>
+                                                        <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
+                                                        {dates.map(date => {
+                                                            const isPresent = attendanceData[`${date}_${s.id}_${currentSubjectId}`]?.status === 'present';
+                                                            if(isPresent) presentCount++;
+                                                            return <td key={date} className="border-l px-2 py-3 text-center">{isPresent ? <span className="text-emerald-500 font-bold">✅</span> : <span className="text-slate-300">-</span>}</td>
+                                                        })}
+                                                        <td className="border-l px-4 py-3 text-center font-bold text-indigo-700 bg-indigo-50/30">{presentCount}</td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 text-slate-700">
+                                            <tr>
+                                                <th className="border-b px-4 py-3 text-center font-semibold w-16">เลขที่</th>
+                                                <th className="border-b px-4 py-3 font-semibold min-w-[200px]">ชื่อ - นามสกุล</th>
+                                                <th className="border-b border-l px-4 py-3 text-center font-semibold bg-amber-50">จิตพิสัย</th>
+                                                {filteredAssignments.map(a => <th key={a.id} className="border-b border-l px-4 py-3 text-center text-xs font-semibold">{a.title}<br/><span className="text-indigo-500">({a.maxScore})</span></th>)}
+                                                {filteredAssignments.length > 0 && <th className="border-b border-l px-4 py-3 text-center bg-indigo-50 font-semibold w-24">คะแนนรวม</th>}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredStudents.sort((a,b) => a.number - b.number).map(s => {
+                                                const behaviorPts = getBehaviorScore(s.id); 
+                                                let total = 0, max = 0;
+                                                return (
+                                                    <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3 text-center text-slate-500">{s.number}</td>
+                                                        <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
+                                                        <td className={`border-l px-4 py-3 text-center font-bold ${behaviorPts > 0 ? 'text-emerald-600' : behaviorPts < 0 ? 'text-rose-600' : 'text-slate-400'}`}>{behaviorPts !== 0 ? behaviorPts : '-'}</td>
+                                                        {filteredAssignments.map(a => { 
+                                                            const sc = assignmentData[a.id]?.[s.id]?.score; 
+                                                            total += (sc || 0); max += a.maxScore; 
+                                                            return <td key={a.id} className="border-l px-4 py-3 text-center text-slate-600">{sc !== undefined ? sc : '-'}</td> 
+                                                        })}
+                                                        {filteredAssignments.length > 0 && <td className="border-l px-4 py-3 text-center font-bold text-indigo-700 bg-indigo-50/50">{total}/{max}</td>}
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-dashed">
+                                กรุณาเลือกห้องเรียนที่มีนักเรียน
+                            </div>
+                        )}
                      </div>
                   )}
 
